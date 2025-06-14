@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Building2, Search, FileText, Users, Shield } from "lucide-react";
@@ -40,36 +41,69 @@ const Index = () => {
   }, []);
 
   const fetchUserProfile = async (user: any) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        committee:committees(name),
-        roles:user_roles(role)
-      `)
-      .eq('id', user.id)
-      .single();
+    try {
+      // First get the basic profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-    if (error && error.code !== 'PGRST116') { // Ignore no rows found error
-      toast({ title: "Error fetching profile", description: error.message, variant: "destructive" });
-      setCurrentUser(user);
-    } else if (data) {
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Profile error:', profileError);
+        toast({ title: "Error fetching profile", description: profileError.message, variant: "destructive" });
+        setCurrentUser({
+          ...user,
+          name: user.email,
+          role: 'DEO',
+          committee: null,
+        });
+        return;
+      }
+
+      // Get user role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (roleError && roleError.code !== 'PGRST116') {
+        console.error('Role error:', roleError);
+      }
+
+      // Get committee info if profile has committee_id
+      let committeeData = null;
+      if (profileData?.committee_id) {
+        const { data: committee, error: committeeError } = await supabase
+          .from('committees')
+          .select('name')
+          .eq('id', profileData.committee_id)
+          .single();
+
+        if (!committeeError) {
+          committeeData = committee;
+        }
+      }
+
       const userProfile = {
         ...user,
-        ...data,
-        name: data.full_name,
-        role: Array.isArray(data.roles) && data.roles.length > 0 ? data.roles[0].role : 'DEO',
-        committee: data.committee?.name || null
+        ...profileData,
+        name: profileData?.full_name || user.email,
+        role: roleData?.role || 'DEO',
+        committee: committeeData?.name || null
       };
+      
       setCurrentUser(userProfile);
-    } else {
-       // Profile might not be created yet, use basic info
-       setCurrentUser({
-         ...user,
-         name: user.email,
-         role: 'DEO', // Default role
-         committee: null,
-       });
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      // Fallback to basic user info
+      setCurrentUser({
+        ...user,
+        name: user.email,
+        role: 'DEO',
+        committee: null,
+      });
     }
   };
 
