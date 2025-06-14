@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Building2, Search, FileText, Users, Shield } from "lucide-react";
@@ -23,12 +22,23 @@ const Index = () => {
         .from('profiles')
         .select('*')
         .eq('username', username)
-        .single();
+        .maybeSingle();
 
       console.log('Profile query result:', { profileData, profileError });
 
-      if (profileError || !profileData) {
-        console.log('Profile not found or error:', profileError);
+      if (profileError) {
+        console.log('Database error:', profileError);
+        toast({ 
+          title: "Login Failed", 
+          description: "Database error occurred", 
+          variant: "destructive" 
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (!profileData) {
+        console.log('Profile not found for username:', username);
         toast({ 
           title: "Login Failed", 
           description: "Invalid username or user not found", 
@@ -46,7 +56,7 @@ const Index = () => {
         .from('user_roles')
         .select('role')
         .eq('user_id', profileData.id)
-        .single();
+        .maybeSingle();
 
       console.log('Role query result:', { roleData, roleError });
 
@@ -58,7 +68,7 @@ const Index = () => {
           .from('committees')
           .select('name')
           .eq('id', profileData.committee_id)
-          .single();
+          .maybeSingle();
         
         if (committee) {
           committeeData = committee;
