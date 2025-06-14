@@ -59,7 +59,7 @@ const Index = () => {
         ...user,
         ...data,
         name: data.full_name,
-        role: data.roles && data.roles.length > 0 ? data.roles[0].role : 'DEO',
+        role: data.roles && data.roles.length > 0 && typeof data.roles[0] === 'object' ? data.roles[0].role : 'DEO',
         committee: data.committee?.name || null
       };
       setCurrentUser(userProfile);
@@ -69,7 +69,7 @@ const Index = () => {
          ...user,
          name: user.email,
          role: 'DEO', // Default role
-         committee: null
+         committee: null,
        });
     }
   };
