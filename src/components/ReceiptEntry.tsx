@@ -45,7 +45,11 @@ const ReceiptEntry = ({ user }) => {
   const { data: committees, isLoading: committeesLoading } = useQuery({ queryKey: ['committees'], queryFn: fetchCommittees });
 
   const mutation = useMutation({
-    mutationFn: (newReceipt: any) => supabase.from('receipts').insert(newReceipt),
+    mutationFn: async (newReceipt: any) => {
+      const { data, error } = await supabase.from('receipts').insert(newReceipt);
+      if (error) throw new Error(error.message);
+      return data;
+    },
     onSuccess: () => {
       toast({
         title: "Receipt Saved Successfully",

@@ -4,30 +4,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Search, CheckCircle, XCircle, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-
-const fetchCommittees = async () => {
-    const { data, error } = await supabase.from('committees').select('id, name');
-    if (error) throw new Error(error.message);
-    return data;
-}
 
 const ReceiptSearch = ({ user }) => {
   const [searchData, setSearchData] = useState({
-    committee: '',
     book_number: '',
     receipt_number: ''
   });
   const [searchResult, setSearchResult] = useState<any | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
-  
-  const { data: committees, isLoading: committeesLoading } = useQuery({ queryKey: ['committees'], queryFn: fetchCommittees });
 
   const handleInputChange = (field, value) => {
     setSearchData(prev => ({ ...prev, [field]: value }));
@@ -38,21 +27,38 @@ const ReceiptSearch = ({ user }) => {
     setIsSearching(true);
     setSearchResult(null);
 
-    const { data, error } = await supabase
+    // First get the receipt
+    const { data: receipt, error } = await supabase
         .from('receipts')
-        .select('*, source_committee:committees(name), dest_committee:committees(name)')
+        .select('*')
         .eq('book_number', searchData.book_number)
         .eq('receipt_number', searchData.receipt_number)
-        // RLS will ensure officers can search everything
         .maybeSingle();
 
     if (error) {
         toast({ title: "Search Error", description: error.message, variant: "destructive" });
-    } else if (data) {
+        setIsSearching(false);
+        return;
+    }
+
+    if (receipt) {
+        // Get committee names separately
+        const { data: sourceCommittee } = await supabase
+            .from('committees')
+            .select('name')
+            .eq('id', receipt.source_committee_id)
+            .single();
+
+        const { data: destCommittee } = await supabase
+            .from('committees')
+            .select('name')
+            .eq('id', receipt.dest_committee_id)
+            .single();
+
         const result = {
-            ...data,
-            sourceCommittee: data.source_committee.name,
-            destCommittee: data.dest_committee.name,
+            ...receipt,
+            sourceCommittee: sourceCommittee?.name || 'Unknown',
+            destCommittee: destCommittee?.name || 'Unknown',
             status: 'Genuine'
         };
         setSearchResult(result);
@@ -66,7 +72,7 @@ const ReceiptSearch = ({ user }) => {
   };
 
   const handleReset = () => {
-    setSearchData({ committee: '', book_number: '', receipt_number: '' });
+    setSearchData({ book_number: '', receipt_number: '' });
     setSearchResult(null);
   };
 
