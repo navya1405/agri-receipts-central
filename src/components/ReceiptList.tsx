@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +36,38 @@ const ReceiptList = ({ user }) => {
       if (!committees) return new Map();
       return new Map(committees.map(c => [c.id, c.name]));
   }, [committees]);
+
+  // Filter committees based on user role
+  const filteredCommittees = useMemo(() => {
+    if (!committees) return [];
+    
+    // JD can see all committees
+    if (user.role === 'JD') {
+      return committees;
+    }
+    
+    // Supervisor and DEO should only see their assigned committee
+    if (user.role === 'Supervisor' || user.role === 'DEO') {
+      const userCommittee = user.committee?.toLowerCase() || '';
+      
+      return committees.filter(committee => {
+        const committeeName = committee.name.toLowerCase();
+        
+        // Try to match the user's committee with the database committee
+        if (userCommittee === 'kakinada amc' && committeeName.includes('kakinada')) {
+          return true;
+        }
+        if (userCommittee === 'tuni amc' && committeeName.includes('tuni')) {
+          return true;
+        }
+        
+        // Generic matching for other cases
+        return committeeName.includes(userCommittee) || userCommittee.includes(committeeName);
+      });
+    }
+    
+    return [];
+  }, [committees, user.role, user.committee]);
   
   const allReceipts = useMemo(() => {
       if (!receipts) return [];
@@ -46,12 +77,32 @@ const ReceiptList = ({ user }) => {
       }));
   }, [receipts, committeeMap]);
 
-  const commodities = useMemo(() => {
-    if(!receipts) return [];
-    return [...new Set(receipts.map(r => r.commodity))]
-  }, [receipts]);
+  // Filter receipts based on user role and committee access
+  const userAccessibleReceipts = useMemo(() => {
+    if (!allReceipts.length) return [];
+    
+    // JD can see all receipts
+    if (user.role === 'JD') {
+      return allReceipts;
+    }
+    
+    // Supervisor and DEO should only see receipts from their committee
+    if (user.role === 'Supervisor' || user.role === 'DEO') {
+      const allowedCommitteeNames = filteredCommittees.map(c => c.name);
+      return allReceipts.filter(receipt => 
+        allowedCommitteeNames.includes(receipt.committeeName)
+      );
+    }
+    
+    return [];
+  }, [allReceipts, user.role, filteredCommittees]);
 
-  const filteredReceipts = allReceipts.filter(receipt => {
+  const commodities = useMemo(() => {
+    if(!userAccessibleReceipts) return [];
+    return [...new Set(userAccessibleReceipts.map(r => r.commodity))]
+  }, [userAccessibleReceipts]);
+
+  const filteredReceipts = userAccessibleReceipts.filter(receipt => {
     const r = receipt as any;
     const matchesSearch = searchTerm === '' || 
       (r.trader_name && r.trader_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -161,7 +212,7 @@ const ReceiptList = ({ user }) => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Committees</SelectItem>
-                      {committees?.map((committee) => (
+                      {filteredCommittees?.map((committee) => (
                         <SelectItem key={committee.name} value={committee.name}>
                           {committee.name}
                         </SelectItem>
@@ -357,7 +408,7 @@ const ReceiptList = ({ user }) => {
           {/* Summary Footer */}
           <div className="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-sm text-gray-600">
             <span>
-              Showing {filteredReceipts.length} of {allReceipts.length} receipts
+              Showing {filteredReceipts.length} of {userAccessibleReceipts.length} receipts
             </span>
             <span className="font-medium">
               Total Value: ₹{filteredReceipts.reduce((sum, receipt: any) => sum + Number(receipt.value), 0).toLocaleString()}
