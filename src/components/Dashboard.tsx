@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ const Dashboard = ({ user, onLogout }) => {
       { id: 'overview', label: 'Overview', icon: BarChart3 }
     ];
 
-    // Updated role-based access control
+    // Updated role-based access control for Kakinada district
     switch (user.role) {
       case 'DEO':
         return [
@@ -54,7 +55,7 @@ const Dashboard = ({ user, onLogout }) => {
       case 'JD':
         return [
           ...commonItems,
-          { id: 'analytics', label: 'State Analytics', icon: TrendingUp },
+          { id: 'analytics', label: 'District Analytics', icon: TrendingUp },
           { id: 'trader-analytics', label: 'Trader Analysis', icon: Users },
           { id: 'list', label: 'All Receipts', icon: FileText },
           { id: 'user-management', label: 'User Management', icon: Shield }
@@ -63,6 +64,19 @@ const Dashboard = ({ user, onLogout }) => {
         return commonItems;
     }
   };
+
+  const getUserCommitteeInfo = () => {
+    // Mock committee data - in real app this would come from user profile
+    const committeeMap = {
+      'demo_deo': { name: 'Tuni AMC', fullName: 'Tuni Agricultural Market Committee' },
+      'demo_supervisor': { name: 'Kakinada AMC', fullName: 'Kakinada Agricultural Market Committee' },
+      'demo_jd': { name: 'East Godavari District', fullName: 'East Godavari District - All AMCs' }
+    };
+    
+    return committeeMap[user.username] || { name: 'Tuni AMC', fullName: 'Tuni Agricultural Market Committee' };
+  };
+
+  const committeeInfo = getUserCommitteeInfo();
 
   const renderContent = () => {
     // Role-based access control
@@ -110,12 +124,16 @@ const Dashboard = ({ user, onLogout }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Receipts</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    {user.role === 'JD' ? 'Total Receipts (District)' : 'Total Receipts'}
+                  </CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">89</div>
-                  <p className="text-xs text-muted-foreground">Tuni AMC Committee</p>
+                  <div className="text-2xl font-bold">
+                    {user.role === 'JD' ? '426' : user.role === 'Supervisor' ? '156' : '89'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{committeeInfo.name}</p>
                 </CardContent>
               </Card>
 
@@ -125,8 +143,12 @@ const Dashboard = ({ user, onLogout }) => {
                   <Plus className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">12</div>
-                  <p className="text-xs text-muted-foreground">+8 from last month</p>
+                  <div className="text-2xl font-bold">
+                    {user.role === 'JD' ? '85' : user.role === 'Supervisor' ? '34' : '12'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    +{user.role === 'JD' ? '18' : user.role === 'Supervisor' ? '12' : '8'} from last month
+                  </p>
                 </CardContent>
               </Card>
 
@@ -136,7 +158,9 @@ const Dashboard = ({ user, onLogout }) => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">24</div>
+                  <div className="text-2xl font-bold">
+                    {user.role === 'JD' ? '145' : user.role === 'Supervisor' ? '67' : '24'}
+                  </div>
                   <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
@@ -147,7 +171,9 @@ const Dashboard = ({ user, onLogout }) => {
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₹2.4L</div>
+                  <div className="text-2xl font-bold">
+                    {user.role === 'JD' ? '₹18.7L' : user.role === 'Supervisor' ? '₹7.3L' : '₹2.4L'}
+                  </div>
                   <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
@@ -155,16 +181,29 @@ const Dashboard = ({ user, onLogout }) => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Tuni Agricultural Market Committee</CardTitle>
+                <CardTitle>
+                  {user.role === 'JD' 
+                    ? 'East Godavari District AMC System' 
+                    : `${committeeInfo.fullName}`
+                  }
+                </CardTitle>
                 <CardDescription>
-                  Digital receipt management system for Tuni AMC
+                  {user.role === 'JD' 
+                    ? 'Digital receipt management system for East Godavari District - Managing all AMCs'
+                    : `Digital receipt management system for ${committeeInfo.name}`
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">System is operational for Tuni AMC</span>
+                    <span className="text-sm">
+                      {user.role === 'JD' 
+                        ? 'System is operational for all AMCs in East Godavari District'
+                        : `System is operational for ${committeeInfo.name}`
+                      }
+                    </span>
                   </div>
                   
                   {user.role === 'DEO' && (
@@ -187,7 +226,7 @@ const Dashboard = ({ user, onLogout }) => {
                           className="w-full justify-start"
                         >
                           <FileText className="mr-2 h-4 w-4" />
-                          View Receipts
+                          View My Receipts
                         </Button>
                       </div>
                     </div>
@@ -195,7 +234,7 @@ const Dashboard = ({ user, onLogout }) => {
 
                   {user.role === 'Supervisor' && (
                     <div className="p-4 bg-purple-50 rounded-lg">
-                      <h4 className="font-medium text-purple-900 mb-2">Supervisor Tools</h4>
+                      <h4 className="font-medium text-purple-900 mb-2">Committee Supervisor Tools</h4>
                       <div className="space-y-2">
                         <Button 
                           variant="outline" 
@@ -221,7 +260,7 @@ const Dashboard = ({ user, onLogout }) => {
 
                   {user.role === 'JD' && (
                     <div className="p-4 bg-red-50 rounded-lg">
-                      <h4 className="font-medium text-red-900 mb-2">Director Tools</h4>
+                      <h4 className="font-medium text-red-900 mb-2">District Director Tools</h4>
                       <div className="space-y-2">
                         <Button 
                           variant="outline" 
@@ -230,7 +269,7 @@ const Dashboard = ({ user, onLogout }) => {
                           className="w-full justify-start"
                         >
                           <TrendingUp className="mr-2 h-4 w-4" />
-                          State Analytics
+                          District Analytics
                         </Button>
                         <Button 
                           variant="outline" 
@@ -239,7 +278,7 @@ const Dashboard = ({ user, onLogout }) => {
                           className="w-full justify-start"
                         >
                           <Users className="mr-2 h-4 w-4" />
-                          Trader Analysis
+                          District Trader Analysis
                         </Button>
                         <Button 
                           variant="outline" 
@@ -250,6 +289,24 @@ const Dashboard = ({ user, onLogout }) => {
                           <Shield className="mr-2 h-4 w-4" />
                           User Management
                         </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {user.role === 'JD' && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">AMCs in East Godavari District</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div>• Tuni AMC</div>
+                        <div>• Kakinada AMC</div>
+                        <div>• Rajahmundry AMC</div>
+                        <div>• Amalapuram AMC</div>
+                        <div>• Peddapuram AMC</div>
+                        <div>• Ramachandrapuram AMC</div>
+                        <div>• Mandapeta AMC</div>
+                        <div>• Korumilli AMC</div>
+                        <div>• Sankhavaram AMC</div>
+                        <div>• Yelamanchili AMC</div>
                       </div>
                     </div>
                   )}
@@ -278,8 +335,15 @@ const Dashboard = ({ user, onLogout }) => {
               </Button>
               <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Tuni AMC System</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Agricultural Market Committee Receipt Management</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">
+                  {user.role === 'JD' ? 'Kakinada District AMC System' : 'Kakinada AMC System'}
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+                  {user.role === 'JD' 
+                    ? 'East Godavari District - Agricultural Market Committee Management'
+                    : 'Agricultural Market Committee Receipt Management'
+                  }
+                </p>
               </div>
             </div>
             
@@ -288,7 +352,7 @@ const Dashboard = ({ user, onLogout }) => {
                 <p className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-32 sm:max-w-none">{user.name || user.email}</p>
                 <div className="flex items-center space-x-1 sm:space-x-2">
                   <Badge className={`text-xs ${getRoleColor(user.role)}`}>{user.role}</Badge>
-                  <span className="text-xs text-gray-500 hidden sm:inline">Tuni AMC</span>
+                  <span className="text-xs text-gray-500 hidden sm:inline">{committeeInfo.name}</span>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={onLogout}>

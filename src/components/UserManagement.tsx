@@ -6,17 +6,75 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Users, UserPlus, Edit, Trash2, Shield } from 'lucide-react';
+import { Users, UserPlus, Edit, Trash2, Shield, Building2 } from 'lucide-react';
 
 const UserManagement = ({ user }: { user: any }) => {
   const [users, setUsers] = useState([
-    { id: '1', name: 'Demo DEO User', email: 'demo_deo@amc.gov.in', role: 'DEO', committee: 'Tuni AMC' },
-    { id: '3', name: 'Demo Supervisor User', email: 'demo_supervisor@amc.gov.in', role: 'Supervisor', committee: 'Tuni AMC' },
-    { id: '4', name: 'Demo Joint Director', email: 'demo_jd@amc.gov.in', role: 'JD', committee: 'State Level' }
+    { 
+      id: '1', 
+      name: 'Demo DEO User', 
+      email: 'demo_deo@kakinada.gov.in', 
+      role: 'DEO', 
+      committee: 'Tuni AMC',
+      fullCommittee: 'Tuni Agricultural Market Committee'
+    },
+    { 
+      id: '2', 
+      name: 'Demo Supervisor User', 
+      email: 'demo_supervisor@kakinada.gov.in', 
+      role: 'Supervisor', 
+      committee: 'Kakinada AMC',
+      fullCommittee: 'Kakinada Agricultural Market Committee'
+    },
+    { 
+      id: '3', 
+      name: 'Demo Joint Director', 
+      email: 'demo_jd@kakinada.gov.in', 
+      role: 'JD', 
+      committee: 'District Level',
+      fullCommittee: 'East Godavari District Office'
+    },
+    { 
+      id: '4', 
+      name: 'Rajahmundry DEO', 
+      email: 'deo_rajahmundry@kakinada.gov.in', 
+      role: 'DEO', 
+      committee: 'Rajahmundry AMC',
+      fullCommittee: 'Rajahmundry Agricultural Market Committee'
+    },
+    { 
+      id: '5', 
+      name: 'Amalapuram Supervisor', 
+      email: 'supervisor_amalapuram@kakinada.gov.in', 
+      role: 'Supervisor', 
+      committee: 'Amalapuram AMC',
+      fullCommittee: 'Amalapuram Agricultural Market Committee'
+    }
   ]);
-  const [newUser, setNewUser] = useState({ name: '', email: '', role: 'DEO', committee: 'Tuni AMC' });
+
+  const [newUser, setNewUser] = useState({ 
+    name: '', 
+    email: '', 
+    role: 'DEO', 
+    committee: 'Tuni AMC',
+    fullCommittee: 'Tuni Agricultural Market Committee'
+  });
   const [editingUser, setEditingUser] = useState<any>(null);
   const { toast } = useToast();
+
+  const committees = [
+    { code: 'Tuni AMC', name: 'Tuni Agricultural Market Committee' },
+    { code: 'Kakinada AMC', name: 'Kakinada Agricultural Market Committee' },
+    { code: 'Rajahmundry AMC', name: 'Rajahmundry Agricultural Market Committee' },
+    { code: 'Amalapuram AMC', name: 'Amalapuram Agricultural Market Committee' },
+    { code: 'Peddapuram AMC', name: 'Peddapuram Agricultural Market Committee' },
+    { code: 'Ramachandrapuram AMC', name: 'Ramachandrapuram Agricultural Market Committee' },
+    { code: 'Mandapeta AMC', name: 'Mandapeta Agricultural Market Committee' },
+    { code: 'Korumilli AMC', name: 'Korumilli Agricultural Market Committee' },
+    { code: 'Sankhavaram AMC', name: 'Sankhavaram Agricultural Market Committee' },
+    { code: 'Yelamanchili AMC', name: 'Yelamanchili Agricultural Market Committee' },
+    { code: 'District Level', name: 'East Godavari District Office' }
+  ];
 
   const handleAddUser = () => {
     if (!newUser.name || !newUser.email) {
@@ -28,17 +86,25 @@ const UserManagement = ({ user }: { user: any }) => {
       return;
     }
 
+    const selectedCommittee = committees.find(c => c.code === newUser.committee);
     const user = {
       id: Date.now().toString(),
-      ...newUser
+      ...newUser,
+      fullCommittee: selectedCommittee?.name || newUser.committee
     };
 
     setUsers([...users, user]);
-    setNewUser({ name: '', email: '', role: 'DEO', committee: 'Tuni AMC' });
+    setNewUser({ 
+      name: '', 
+      email: '', 
+      role: 'DEO', 
+      committee: 'Tuni AMC',
+      fullCommittee: 'Tuni Agricultural Market Committee'
+    });
     
     toast({
       title: "User Added",
-      description: `${newUser.name} has been added successfully`,
+      description: `${newUser.name} has been added successfully to ${selectedCommittee?.name}`,
     });
   };
 
@@ -52,7 +118,13 @@ const UserManagement = ({ user }: { user: any }) => {
   const handleUpdateUser = () => {
     if (!editingUser) return;
 
-    setUsers(users.map(u => u.id === editingUser.id ? editingUser : u));
+    const selectedCommittee = committees.find(c => c.code === editingUser.committee);
+    const updatedUser = {
+      ...editingUser,
+      fullCommittee: selectedCommittee?.name || editingUser.committee
+    };
+
+    setUsers(users.map(u => u.id === editingUser.id ? updatedUser : u));
     setEditingUser(null);
     
     toast({
@@ -87,7 +159,7 @@ const UserManagement = ({ user }: { user: any }) => {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">User Management</h2>
-        <p className="text-gray-600">Manage system users and their roles</p>
+        <p className="text-gray-600">Manage system users and their roles across East Godavari District AMCs</p>
       </div>
 
       {/* Add New User */}
@@ -97,10 +169,10 @@ const UserManagement = ({ user }: { user: any }) => {
             <UserPlus className="h-5 w-5" />
             Add New User
           </CardTitle>
-          <CardDescription>Create new user accounts for the AMC system</CardDescription>
+          <CardDescription>Create new user accounts for the Kakinada District AMC system</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <Input
               placeholder="Full Name"
               value={newUser.name}
@@ -122,6 +194,18 @@ const UserManagement = ({ user }: { user: any }) => {
                 <SelectItem value="JD">Joint Director</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={newUser.committee} onValueChange={(value) => setNewUser({ ...newUser, committee: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Committee" />
+              </SelectTrigger>
+              <SelectContent>
+                {committees.map(committee => (
+                  <SelectItem key={committee.code} value={committee.code}>
+                    {committee.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button onClick={handleAddUser}>Add User</Button>
           </div>
         </CardContent>
@@ -132,9 +216,9 @@ const UserManagement = ({ user }: { user: any }) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            System Users
+            System Users - East Godavari District
           </CardTitle>
-          <CardDescription>Manage existing users and their permissions</CardDescription>
+          <CardDescription>Manage existing users and their permissions across all AMCs</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -147,7 +231,10 @@ const UserManagement = ({ user }: { user: any }) => {
                   <div>
                     <h4 className="font-medium">{user.name}</h4>
                     <p className="text-sm text-gray-600">{user.email}</p>
-                    <p className="text-xs text-gray-500">{user.committee}</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Building2 className="h-3 w-3 text-gray-400" />
+                      <p className="text-xs text-gray-500">{user.committee}</p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -183,7 +270,7 @@ const UserManagement = ({ user }: { user: any }) => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
               <Input
                 placeholder="Full Name"
                 value={editingUser.name}
@@ -205,6 +292,18 @@ const UserManagement = ({ user }: { user: any }) => {
                   <SelectItem value="JD">Joint Director</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={editingUser.committee} onValueChange={(value) => setEditingUser({ ...editingUser, committee: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Committee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {committees.map(committee => (
+                    <SelectItem key={committee.code} value={committee.code}>
+                      {committee.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-2">
               <Button onClick={handleUpdateUser}>Update User</Button>
@@ -215,7 +314,7 @@ const UserManagement = ({ user }: { user: any }) => {
       )}
 
       {/* System Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -223,7 +322,7 @@ const UserManagement = ({ user }: { user: any }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{users.length}</div>
-            <p className="text-xs text-muted-foreground">Active users</p>
+            <p className="text-xs text-muted-foreground">District-wide</p>
           </CardContent>
         </Card>
 
@@ -248,7 +347,41 @@ const UserManagement = ({ user }: { user: any }) => {
             <p className="text-xs text-muted-foreground">Committee supervisors</p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active AMCs</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">10</div>
+            <p className="text-xs text-muted-foreground">In East Godavari</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* District Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            East Godavari District AMC Overview
+          </CardTitle>
+          <CardDescription>Agricultural Market Committees under Kakinada District administration</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {committees.filter(c => c.code !== 'District Level').map(committee => (
+              <div key={committee.code} className="p-3 bg-gray-50 rounded-lg">
+                <div className="text-sm font-medium text-gray-900">{committee.code}</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  Users: {users.filter(u => u.committee === committee.code).length}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
