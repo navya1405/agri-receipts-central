@@ -17,15 +17,6 @@ const Index = () => {
     console.log('Login attempt for username:', username);
     
     try {
-      // First, let's check if there are any users in the profiles table at all
-      console.log('Checking all profiles in the database...');
-      const { data: allProfiles, error: allProfilesError } = await supabase
-        .from('profiles')
-        .select('*');
-      
-      console.log('All profiles in database:', allProfiles);
-      console.log('All profiles error:', allProfilesError);
-
       // Query the profiles table directly using username
       console.log('Querying profiles table for username:', username);
       const { data: profileData, error: profileError } = await supabase
