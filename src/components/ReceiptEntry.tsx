@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,8 +56,8 @@ const ReceiptEntry = ({ user }) => {
     receipt_number: '',
     trader_name: '',
     trader_address: '',
-    trader_license: '',
     payee_name: '',
+    payee_address: '',
     commodity: '',
     quantity: '',
     unit: '',
@@ -170,7 +169,6 @@ const ReceiptEntry = ({ user }) => {
         date: format(date, "yyyy-MM-dd"),
         trader_name: formData.trader_name,
         trader_address: formData.trader_address,
-        trader_license: formData.trader_license,
         payee_name: formData.payee_name,
         commodity: formData.commodity,
         quantity: parseFloat(formData.quantity),
@@ -223,8 +221,8 @@ const ReceiptEntry = ({ user }) => {
       receipt_number: '',
       trader_name: '',
       trader_address: '',
-      trader_license: '',
       payee_name: '',
+      payee_address: '',
       commodity: '',
       quantity: '',
       unit: '',
@@ -303,10 +301,6 @@ const ReceiptEntry = ({ user }) => {
                 <Label htmlFor="traderAddress">Trader Address</Label>
                 <Input id="traderAddress" placeholder="Enter trader address" value={formData.trader_address} onChange={(e) => handleInputChange('trader_address', e.target.value)} required />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="traderLicense">Trader License</Label>
-                <Input id="traderLicense" placeholder="Enter trader license number" value={formData.trader_license} onChange={(e) => handleInputChange('trader_license', e.target.value)} />
-              </div>
             </div>
 
             {/* Payee Section */}
@@ -315,6 +309,10 @@ const ReceiptEntry = ({ user }) => {
               <div className="space-y-2">
                 <Label htmlFor="payeeName">Payee Name</Label>
                 <Input id="payeeName" placeholder="Enter payee name" value={formData.payee_name} onChange={(e) => handleInputChange('payee_name', e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="payeeAddress">Payee Address</Label>
+                <Input id="payeeAddress" placeholder="Enter payee address" value={formData.payee_address} onChange={(e) => handleInputChange('payee_address', e.target.value)} required />
               </div>
             </div>
           </div>
