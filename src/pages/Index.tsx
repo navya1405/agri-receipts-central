@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Building2, Search, FileText, Users, Shield } from "lucide-react";
 import Dashboard from "@/components/Dashboard";
@@ -15,7 +15,7 @@ const Index = () => {
   const handleLogin = async (username: string, password: string) => {
     setLoading(true);
     try {
-      // Query the profiles table directly using username and a simple password check
+      // Query the profiles table directly using username
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -33,7 +33,7 @@ const Index = () => {
       }
 
       // Get user role
-      const { data: roleData, error: roleError } = await supabase
+      const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', profileData.id)
@@ -128,7 +128,7 @@ const Index = () => {
                   <p><strong>Supervisor:</strong> demo_supervisor</p>
                   <p><strong>Joint Director:</strong> demo_jd</p>
                 </div>
-                <p className="text-xs text-blue-600 mt-2">Use these usernames to login with any password.</p>
+                <p className="text-xs text-blue-600 mt-2">Use these usernames to login (password not required for demo).</p>
               </div>
             </div>
             <div className="flex justify-center">

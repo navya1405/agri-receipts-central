@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LogIn, Eye, EyeOff } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 interface LoginFormProps {
   onLogin: (username: string, password: string) => void;
@@ -14,7 +14,6 @@ interface LoginFormProps {
 const LoginForm = ({ onLogin, loading }: LoginFormProps) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +26,9 @@ const LoginForm = ({ onLogin, loading }: LoginFormProps) => {
         <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
           <LogIn className="h-6 w-6 text-blue-600" />
         </div>
-        <CardTitle className="text-2xl">Sign In</CardTitle>
+        <CardTitle className="text-2xl">Demo Login</CardTitle>
         <CardDescription>
-          Enter your username and password to access the AMC system
+          Enter demo username to access the AMC system
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -39,7 +38,7 @@ const LoginForm = ({ onLogin, loading }: LoginFormProps) => {
             <Input 
               id="username" 
               type="text" 
-              placeholder="Enter your username" 
+              placeholder="Enter demo username" 
               value={username} 
               onChange={(e) => setUsername(e.target.value)} 
               required 
@@ -48,29 +47,17 @@ const LoginForm = ({ onLogin, loading }: LoginFormProps) => {
           
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <Button 
-                type="button" 
-                variant="ghost" 
-                size="sm" 
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent" 
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
-              </Button>
-            </div>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Not required for demo"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
 
           <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? 'Signing In...' : 'Demo Login'}
           </Button>
         </form>
       </CardContent>
