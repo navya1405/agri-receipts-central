@@ -9,16 +9,180 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      committees: {
+        Row: {
+          code: string
+          created_at: string
+          district: string | null
+          id: string
+          name: string
+          state: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          name: string
+          state?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          district?: string | null
+          id?: string
+          name?: string
+          state?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          committee_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          committee_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          committee_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_committee_id_fkey"
+            columns: ["committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receipts: {
+        Row: {
+          book_number: string
+          commodity: string
+          created_at: string
+          created_by: string
+          date: string
+          dest_committee_id: string
+          fees_paid: number
+          id: string
+          quantity: number
+          receipt_number: string
+          source_committee_id: string
+          status: string | null
+          trader_license: string | null
+          trader_name: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          book_number: string
+          commodity: string
+          created_at?: string
+          created_by: string
+          date: string
+          dest_committee_id: string
+          fees_paid: number
+          id?: string
+          quantity: number
+          receipt_number: string
+          source_committee_id: string
+          status?: string | null
+          trader_license?: string | null
+          trader_name: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          book_number?: string
+          commodity?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          dest_committee_id?: string
+          fees_paid?: number
+          id?: string
+          quantity?: number
+          receipt_number?: string
+          source_committee_id?: string
+          status?: string | null
+          trader_license?: string | null
+          trader_name?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_dest_committee_id_fkey"
+            columns: ["dest_committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receipts_source_committee_id_fkey"
+            columns: ["source_committee_id"]
+            isOneToOne: false
+            referencedRelation: "committees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_committee: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
+      get_user_role: {
+        Args: { user_uuid: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "DEO" | "Officer" | "Supervisor" | "JD"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +297,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["DEO", "Officer", "Supervisor", "JD"],
+    },
   },
 } as const

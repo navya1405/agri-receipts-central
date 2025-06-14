@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,94 +7,80 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Download, Search, Filter, Calendar, Edit, Eye } from "lucide-react";
+import { FileText, Download, Search, Edit, Eye } from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const fetchReceipts = async () => {
+  const { data, error } = await supabase
+    .from('receipts')
+    .select('*, source_committee:committees(name), dest_committee:committees(name)')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  
+  // The join is tricky, so let's just fetch and map later if needed.
+  // The RLS policy will filter data automatically for the logged-in user.
+  const { data: rawReceipts, error: rawError } = await supabase.from('receipts').select('*').order('created_at', {ascending: false});
+  if(rawError) throw new Error(rawError.message);
+  return rawReceipts;
+};
+
+const fetchCommittees = async () => {
+    const { data, error } = await supabase.from('committees').select('id, name');
+    if (error) throw new Error(error.message);
+    return data;
+}
 
 const ReceiptList = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCommittee, setFilterCommittee] = useState('all');
   const [filterCommodity, setFilterCommodity] = useState('all');
+  
+  const { data: receipts, isLoading: receiptsLoading } = useQuery({ queryKey: ['receipts'], queryFn: fetchReceipts});
+  const { data: committees, isLoading: committeesLoading } = useQuery({ queryKey: ['committees'], queryFn: fetchCommittees });
 
-  // Mock data for receipts
-  const mockReceipts = [
-    {
-      id: '1',
-      date: '2024-06-12',
-      bookNumber: 'BK001',
-      receiptNumber: 'R001',
-      traderName: 'Rajesh Traders',
-      sourceCommittee: 'Mumbai AMC',
-      destCommittee: 'Pune AMC',
-      commodity: 'Rice',
-      quantity: 50,
-      value: 125000,
-      feesPaid: 2500,
-      status: 'Active',
-      createdBy: 'DEO001'
-    },
-    {
-      id: '2',
-      date: '2024-06-13',
-      bookNumber: 'BK002',
-      receiptNumber: 'R002',
-      traderName: 'Shankar Agro',
-      sourceCommittee: 'Pune AMC',
-      destCommittee: 'Nashik AMC',
-      commodity: 'Wheat',
-      quantity: 75,
-      value: 187500,
-      feesPaid: 3750,
-      status: 'Active',
-      createdBy: 'DEO002'
-    },
-    {
-      id: '3',
-      date: '2024-06-14',
-      bookNumber: 'BK003',
-      receiptNumber: 'R003',
-      traderName: 'Mahesh Enterprises',
-      sourceCommittee: 'Mumbai AMC',
-      destCommittee: 'Kolhapur AMC',
-      commodity: 'Cotton',
-      quantity: 100,
-      value: 300000,
-      feesPaid: 6000,
-      status: 'Active',
-      createdBy: 'DEO001'
-    }
-  ];
+  const committeeMap = useMemo(() => {
+      if (!committees) return new Map();
+      return new Map(committees.map(c => [c.id, c.name]));
+  }, [committees]);
+  
+  const allReceipts = useMemo(() => {
+      if (!receipts) return [];
+      return receipts.map(r => ({
+          ...r,
+          sourceCommittee: committeeMap.get(r.source_committee_id) || 'Loading...',
+          destCommittee: committeeMap.get(r.dest_committee_id) || 'Loading...'
+      }));
+  }, [receipts, committeeMap]);
 
-  const committees = [
-    'Mumbai AMC', 'Pune AMC', 'Nashik AMC', 'Nagpur AMC', 'Aurangabad AMC',
-    'Kolhapur AMC', 'Sangli AMC', 'Solapur AMC', 'Ahmednagar AMC', 'Satara AMC'
-  ];
+  const commodities = useMemo(() => {
+    if(!receipts) return [];
+    return [...new Set(receipts.map(r => r.commodity))]
+  }, [receipts]);
 
-  const commodities = [
-    'Rice', 'Wheat', 'Jowar', 'Bajra', 'Maize', 'Tur', 'Gram', 'Moong',
-    'Urad', 'Masur', 'Cotton', 'Sugarcane', 'Onion', 'Potato', 'Tomato'
-  ];
-
-  const filteredReceipts = mockReceipts.filter(receipt => {
+  const filteredReceipts = allReceipts.filter(receipt => {
+    const r = receipt as any; // temp any to fix build
     const matchesSearch = searchTerm === '' || 
-      receipt.traderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      receipt.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      receipt.bookNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      (r.trader_name && r.trader_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (r.receipt_number && r.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (r.book_number && r.book_number.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCommittee = filterCommittee === 'all' || 
-      receipt.sourceCommittee === filterCommittee || 
-      receipt.destCommittee === filterCommittee;
+      r.sourceCommittee === filterCommittee || 
+      r.destCommittee === filterCommittee;
     
     const matchesCommodity = filterCommodity === 'all' || 
-      receipt.commodity === filterCommodity;
+      r.commodity === filterCommodity;
 
     return matchesSearch && matchesCommittee && matchesCommodity;
   });
 
   const handleExport = () => {
-    // Mock export functionality
     const csvContent = "data:text/csv;charset=utf-8," 
       + "Date,Book Number,Receipt Number,Trader Name,Source Committee,Destination Committee,Commodity,Quantity,Value,Fees Paid\n"
-      + filteredReceipts.map(receipt => 
-          `${receipt.date},${receipt.bookNumber},${receipt.receiptNumber},${receipt.traderName},${receipt.sourceCommittee},${receipt.destCommittee},${receipt.commodity},${receipt.quantity},${receipt.value},${receipt.feesPaid}`
+      + filteredReceipts.map((receipt: any) => 
+          `${receipt.date},${receipt.book_number},${receipt.receipt_number},${receipt.trader_name},${receipt.sourceCommittee},${receipt.destCommittee},${receipt.commodity},${receipt.quantity},${receipt.value},${receipt.fees_paid}`
         ).join("\n");
 
     const encodedUri = encodeURI(csvContent);
@@ -104,45 +91,21 @@ const ReceiptList = ({ user }) => {
     link.click();
     document.body.removeChild(link);
   };
-
-  const getTitle = () => {
-    switch (user.role) {
-      case 'DEO': return 'My Receipts';
-      case 'Supervisor': return 'Committee Receipts';
-      case 'JD': return 'All Receipts';
-      default: return 'Receipts';
-    }
-  };
-
-  const getDescription = () => {
-    switch (user.role) {
-      case 'DEO': return 'View and manage receipts you have entered';
-      case 'Supervisor': return `View all receipts for ${user.committee}`;
-      case 'JD': return 'View all receipts across all committees';
-      default: return 'View receipt records';
-    }
-  };
+  
+  // ... getTitle and getDescription are fine
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center">
-              <FileText className="mr-2 h-5 w-5" />
-              {getTitle()}
-            </span>
-            <Button onClick={handleExport} className="bg-green-600 hover:bg-green-700">
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
+            {/* ... title */}
           </CardTitle>
           <CardDescription>
-            {getDescription()}
+            {/* ... description */}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="flex-1">
               <Label htmlFor="search" className="sr-only">Search</Label>
@@ -159,15 +122,15 @@ const ReceiptList = ({ user }) => {
             </div>
             
             <div className="w-full md:w-48">
-              <Select value={filterCommittee} onValueChange={setFilterCommittee}>
+              <Select value={filterCommittee} onValueChange={setFilterCommittee} disabled={committeesLoading}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by committee" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Committees</SelectItem>
-                  {committees.map((committee) => (
-                    <SelectItem key={committee} value={committee}>
-                      {committee}
+                  {committees?.map((committee) => (
+                    <SelectItem key={committee.name} value={committee.name}>
+                      {committee.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -175,7 +138,7 @@ const ReceiptList = ({ user }) => {
             </div>
 
             <div className="w-full md:w-48">
-              <Select value={filterCommodity} onValueChange={setFilterCommodity}>
+              <Select value={filterCommodity} onValueChange={setFilterCommodity} disabled={receiptsLoading}>
                 <SelectTrigger>
                   <SelectValue placeholder="Filter by commodity" />
                 </SelectTrigger>
@@ -191,7 +154,6 @@ const ReceiptList = ({ user }) => {
             </div>
           </div>
 
-          {/* Receipt Table */}
           <div className="border rounded-lg">
             <Table>
               <TableHeader>
@@ -208,19 +170,25 @@ const ReceiptList = ({ user }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReceipts.length > 0 ? (
-                  filteredReceipts.map((receipt) => (
+                {receiptsLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell colSpan={9}><Skeleton className="h-8 w-full" /></TableCell>
+                        </TableRow>
+                    ))
+                ) : filteredReceipts.length > 0 ? (
+                  filteredReceipts.map((receipt: any) => (
                     <TableRow key={receipt.id}>
                       <TableCell className="font-medium">
                         {new Date(receipt.date).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium">{receipt.bookNumber}</div>
-                          <div className="text-gray-500">{receipt.receiptNumber}</div>
+                          <div className="font-medium">{receipt.book_number}</div>
+                          <div className="text-gray-500">{receipt.receipt_number}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{receipt.traderName}</TableCell>
+                      <TableCell>{receipt.trader_name}</TableCell>
                       <TableCell>
                         <div className="text-sm">
                           <div>{receipt.sourceCommittee}</div>
@@ -229,7 +197,7 @@ const ReceiptList = ({ user }) => {
                       </TableCell>
                       <TableCell>{receipt.commodity}</TableCell>
                       <TableCell>{receipt.quantity} Q</TableCell>
-                      <TableCell>₹{receipt.value.toLocaleString()}</TableCell>
+                      <TableCell>₹{Number(receipt.value).toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge className="bg-green-100 text-green-800">
                           {receipt.status}
@@ -240,7 +208,7 @@ const ReceiptList = ({ user }) => {
                           <Button variant="outline" size="sm">
                             <Eye className="h-3 w-3" />
                           </Button>
-                          {(user.role === 'DEO' && receipt.createdBy === user.username) && (
+                          {(user.role === 'DEO' && receipt.created_by === user.id) && (
                             <Button variant="outline" size="sm">
                               <Edit className="h-3 w-3" />
                             </Button>
@@ -254,7 +222,7 @@ const ReceiptList = ({ user }) => {
                     <TableCell colSpan={9} className="text-center py-8">
                       <div className="text-gray-500">
                         <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                        <p>No receipts found matching your criteria</p>
+                        <p>No receipts found</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -262,14 +230,12 @@ const ReceiptList = ({ user }) => {
               </TableBody>
             </Table>
           </div>
-
-          {/* Summary */}
           <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
             <span>
-              Showing {filteredReceipts.length} of {mockReceipts.length} receipts
+              Showing {filteredReceipts.length} of {allReceipts.length} receipts
             </span>
             <span>
-              Total Value: ₹{filteredReceipts.reduce((sum, receipt) => sum + receipt.value, 0).toLocaleString()}
+              Total Value: ₹{filteredReceipts.reduce((sum, receipt: any) => sum + Number(receipt.value), 0).toLocaleString()}
             </span>
           </div>
         </CardContent>

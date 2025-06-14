@@ -11,6 +11,14 @@ import ReceiptList from "./ReceiptList";
 const Dashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading user information...</div>
+      </div>
+    );
+  }
+
   const getRoleColor = (role) => {
     switch (role) {
       case 'DEO': return 'bg-blue-100 text-blue-800';
@@ -192,7 +200,7 @@ const Dashboard = ({ user, onLogout }) => {
             
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                <p className="text-sm font-medium text-gray-900">{user.name || user.email}</p>
                 <div className="flex items-center space-x-2">
                   <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
                   {user.committee && (
