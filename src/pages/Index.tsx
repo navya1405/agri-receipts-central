@@ -58,7 +58,7 @@ const Index = () => {
         ...user,
         ...data,
         name: data.full_name,
-        role: data.roles?.[0]?.role || 'DEO',
+        role: data.roles?.[0] || 'DEO',
         committee: data.committee?.name || null
       };
       setCurrentUser(userProfile);
