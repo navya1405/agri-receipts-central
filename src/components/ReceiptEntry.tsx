@@ -18,31 +18,8 @@ const commodities = [
     'Bajra', 'Cotton', 'Gram', 'Jowar', 'Maize', 'Masur', 'Moong', 'Onion', 'Potato', 'Rice', 'Sugarcane', 'Tomato', 'Tur', 'Urad', 'Wheat'
 ];
 
-// Nature of receipt options
-const natureOfReceipt = [
-    { value: 'lf', label: 'Licence Fees (LF)' },
-    { value: 'mf', label: 'Market Fees (MF)' },
-    { value: 'uc', label: 'User Charges (UC)' },
-    { value: 'others', label: 'Others' }
-];
-
 // Unit options
 const units = ['Quintals', 'Number', 'Bags'];
-
-// Collection locations
-const collectionLocations = ['Checkpost', 'Office'];
-
-// Supervisors
-const supervisors = ['Supervisor_1', 'Supervisor_2'];
-
-// Tuni locations for checkpost
-const tuniLocations = [
-    'Tuni Main Checkpost',
-    'Tuni Railway Station',
-    'Tuni Bus Stand',
-    'Tuni Market Yard',
-    'Tuni Industrial Area'
-];
 
 const ReceiptEntry = ({ user }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -54,9 +31,7 @@ const ReceiptEntry = ({ user }) => {
   
   const [formData, setFormData] = useState({
     seller_name: '',
-    seller_address: '',
     buyer_name: '',
-    buyer_address: '',
     book_number: '',
     receipt_number: '',
     commodity: '',
@@ -64,14 +39,6 @@ const ReceiptEntry = ({ user }) => {
     unit: '',
     value: '',
     fees_paid: '',
-    nature_of_receipt: '',
-    vehicle_number: '',
-    invoice_number: '',
-    collection_location: '',
-    collected_by: '',
-    checkpost_location: '',
-    generated_by: '',
-    designation: '',
     trader_license: ''
   });
   
@@ -154,9 +121,6 @@ const ReceiptEntry = ({ user }) => {
         quantity: parseFloat(formData.quantity),
         value: parseFloat(formData.value),
         fees_paid: parseFloat(formData.fees_paid),
-        market_fees_collected: parseFloat(formData.fees_paid), // Same as fees_paid for now
-        financial_year: '2024-25', // Default to current financial year
-        month_year: format(date, "yyyy-MM"),
         seller_committee_id: userCommitteeData.id,
         buyer_committee_id: userCommitteeData.id, // Same committee for now
         created_by: user.id,
@@ -194,9 +158,7 @@ const ReceiptEntry = ({ user }) => {
   const handleReset = () => {
     setFormData({
       seller_name: '',
-      seller_address: '',
       buyer_name: '',
-      buyer_address: '',
       book_number: '',
       receipt_number: '',
       commodity: '',
@@ -204,14 +166,6 @@ const ReceiptEntry = ({ user }) => {
       unit: '',
       value: '',
       fees_paid: '',
-      nature_of_receipt: '',
-      vehicle_number: '',
-      invoice_number: '',
-      collection_location: '',
-      collected_by: '',
-      checkpost_location: '',
-      generated_by: '',
-      designation: '',
       trader_license: ''
     });
     setDate(new Date());
@@ -342,7 +296,7 @@ const ReceiptEntry = ({ user }) => {
           </div>
 
           {/* Financial Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="value">Value (₹)</Label>
               <Input id="value" type="number" placeholder="Enter value" value={formData.value} onChange={(e) => handleInputChange('value', e.target.value)} required />
@@ -350,10 +304,6 @@ const ReceiptEntry = ({ user }) => {
             <div className="space-y-2">
               <Label htmlFor="feesPaid">Fees Paid (₹)</Label>
               <Input id="feesPaid" type="number" placeholder="Enter fees paid" value={formData.fees_paid} onChange={(e) => handleInputChange('fees_paid', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="vehicleNumber">Vehicle Number</Label>
-              <Input id="vehicleNumber" placeholder="Enter vehicle number" value={formData.vehicle_number} onChange={(e) => handleInputChange('vehicle_number', e.target.value)} />
             </div>
           </div>
 
