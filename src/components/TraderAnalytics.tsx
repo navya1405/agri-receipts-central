@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { Search, TrendingUp, User, DollarSign, Package, Calendar } from 'lucide-react';
 
@@ -37,6 +36,160 @@ interface TraderData {
   lastTransaction: string | null;
 }
 
+// Demo data for trader analytics
+const demoReceipts: Receipt[] = [
+  {
+    id: '1',
+    date: '2024-06-10',
+    seller_name: 'Rajesh Kumar',
+    commodity: 'Rice',
+    quantity: 500,
+    value: 250000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '2',
+    date: '2024-06-08',
+    seller_name: 'Suresh Reddy',
+    commodity: 'Cotton',
+    quantity: 300,
+    value: 180000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '3',
+    date: '2024-06-07',
+    seller_name: 'Rajesh Kumar',
+    commodity: 'Wheat',
+    quantity: 200,
+    value: 120000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '4',
+    date: '2024-06-05',
+    seller_name: 'Priya Sharma',
+    commodity: 'Jowar',
+    quantity: 400,
+    value: 160000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '5',
+    date: '2024-06-03',
+    seller_name: 'Mohan Rao',
+    commodity: 'Maize',
+    quantity: 600,
+    value: 300000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '6',
+    date: '2024-06-01',
+    seller_name: 'Suresh Reddy',
+    commodity: 'Rice',
+    quantity: 350,
+    value: 175000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '7',
+    date: '2024-05-28',
+    seller_name: 'Lakshmi Devi',
+    commodity: 'Gram',
+    quantity: 250,
+    value: 200000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '8',
+    date: '2024-05-25',
+    seller_name: 'Rajesh Kumar',
+    commodity: 'Cotton',
+    quantity: 450,
+    value: 270000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '9',
+    date: '2024-05-22',
+    seller_name: 'Priya Sharma',
+    commodity: 'Wheat',
+    quantity: 300,
+    value: 180000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '10',
+    date: '2024-05-20',
+    seller_name: 'Mohan Rao',
+    commodity: 'Rice',
+    quantity: 550,
+    value: 275000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '11',
+    date: '2024-05-18',
+    seller_name: 'Kiran Kumar',
+    commodity: 'Sugarcane',
+    quantity: 800,
+    value: 400000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '12',
+    date: '2024-05-15',
+    seller_name: 'Lakshmi Devi',
+    commodity: 'Onion',
+    quantity: 200,
+    value: 80000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '13',
+    date: '2024-05-12',
+    seller_name: 'Venkat Rao',
+    commodity: 'Tomato',
+    quantity: 150,
+    value: 90000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '14',
+    date: '2024-05-10',
+    seller_name: 'Kiran Kumar',
+    commodity: 'Potato',
+    quantity: 400,
+    value: 120000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
+  },
+  {
+    id: '15',
+    date: '2024-05-08',
+    seller_name: 'Venkat Rao',
+    commodity: 'Rice',
+    quantity: 320,
+    value: 160000,
+    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
+    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
+  }
+];
+
 const TraderAnalytics = ({ user }: { user: any }) => {
   const [receiptsData, setReceiptsData] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,31 +198,16 @@ const TraderAnalytics = ({ user }: { user: any }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchTraderData();
-  }, []);
-
-  const fetchTraderData = async () => {
-    try {
-      const { data: receipts, error } = await supabase
-        .from('receipts')
-        .select(`
-          *,
-          seller_committee:seller_committee_id(name, district),
-          buyer_committee:buyer_committee_id(name, district)
-        `);
-
-      if (error) throw error;
-      setReceiptsData(receipts || []);
-    } catch (error: any) {
-      toast({
-        title: "Error fetching trader data",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
+    // Simulate loading demo data
+    setTimeout(() => {
+      setReceiptsData(demoReceipts);
       setLoading(false);
-    }
-  };
+      toast({
+        title: "Demo Data Loaded",
+        description: "Trader analytics loaded with sample data for demonstration.",
+      });
+    }, 1000);
+  }, [toast]);
 
   if (loading) {
     return (
