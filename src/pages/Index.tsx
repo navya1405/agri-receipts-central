@@ -15,7 +15,7 @@ const Index = () => {
     setLoading(true);
     console.log('Demo login attempt for username:', username);
     
-    // Simple demo user mapping
+    // Updated demo user mapping - removed Officer role
     const demoUsers = {
       'demo_deo': {
         id: '1',
@@ -23,14 +23,6 @@ const Index = () => {
         username: 'demo_deo',
         name: 'Demo DEO User',
         role: 'DEO',
-        committee: 'Tuni Agricultural Market Committee'
-      },
-      'demo_officer': {
-        id: '2',
-        email: 'demo_officer@amc.gov.in',
-        username: 'demo_officer',
-        name: 'Demo Officer User',
-        role: 'Officer',
         committee: 'Tuni Agricultural Market Committee'
       },
       'demo_supervisor': {
@@ -65,7 +57,7 @@ const Index = () => {
       console.log('Demo user not found for username:', username);
       toast({ 
         title: "Login Failed", 
-        description: "Invalid username. Please use demo_deo, demo_officer, demo_supervisor, or demo_jd", 
+        description: "Invalid username. Please use demo_deo, demo_supervisor, or demo_jd", 
         variant: "destructive" 
       });
     }
@@ -109,9 +101,9 @@ const Index = () => {
               </p>
               <div className="space-y-4">
                   <div className="flex items-start gap-4"><FileText className="h-6 w-6 text-blue-600 mt-1 shrink-0" /><p><strong>Receipt Entry & Validation:</strong> Digital entry of trade receipts with instant validation.</p></div>
-                  <div className="flex items-start gap-4"><Search className="h-6 w-6 text-green-600 mt-1 shrink-0" /><p><strong>Quick Verification:</strong> Instant receipt verification at checkposts to ensure authenticity.</p></div>
+                  <div className="flex items-start gap-4"><Search className="h-6 w-6 text-green-600 mt-1 shrink-0" /><p><strong>Analytics & Insights:</strong> Comprehensive analytics and trader performance tracking.</p></div>
                   <div className="flex items-start gap-4"><Users className="h-6 w-6 text-purple-600 mt-1 shrink-0" /><p><strong>Role-Based Access:</strong> Secure access for DEOs, Supervisors, and Directors.</p></div>
-                  <div className="flex items-start gap-4"><Shield className="h-6 w-6 text-red-600 mt-1 shrink-0" /><p><strong>Audit & Reporting:</strong> Complete tracking of all system activities for transparency.</p></div>
+                  <div className="flex items-start gap-4"><Shield className="h-6 w-6 text-red-600 mt-1 shrink-0" /><p><strong>User Management:</strong> Complete system administration and role management.</p></div>
               </div>
 
               {/* Demo Credentials Info */}
@@ -119,7 +111,6 @@ const Index = () => {
                 <h3 className="font-semibold text-blue-900 mb-2">Demo Login Credentials</h3>
                 <div className="text-sm text-blue-800 space-y-1">
                   <p><strong>DEO:</strong> demo_deo</p>
-                  <p><strong>Officer:</strong> demo_officer</p>
                   <p><strong>Supervisor:</strong> demo_supervisor</p>
                   <p><strong>Joint Director:</strong> demo_jd</p>
                 </div>

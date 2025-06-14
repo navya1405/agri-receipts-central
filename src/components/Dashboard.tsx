@@ -1,13 +1,14 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, LogOut, FileText, Search, BarChart3, Users, Plus, Download, TrendingUp, Menu, X } from "lucide-react";
+import { Building2, LogOut, FileText, Search, BarChart3, Users, Plus, Download, TrendingUp, Menu, X, Shield } from "lucide-react";
 import ReceiptEntry from "./ReceiptEntry";
 import ReceiptSearch from "./ReceiptSearch";
 import ReceiptList from "./ReceiptList";
 import Analytics from "./Analytics";
+import TraderAnalytics from "./TraderAnalytics";
+import UserManagement from "./UserManagement";
 
 const Dashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -24,7 +25,6 @@ const Dashboard = ({ user, onLogout }) => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'DEO': return 'bg-blue-100 text-blue-800';
-      case 'Officer': return 'bg-green-100 text-green-800';
       case 'Supervisor': return 'bg-purple-100 text-purple-800';
       case 'JD': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -36,7 +36,7 @@ const Dashboard = ({ user, onLogout }) => {
       { id: 'overview', label: 'Overview', icon: BarChart3 }
     ];
 
-    // Restrict access based on role for single committee system
+    // Updated role-based access control
     switch (user.role) {
       case 'DEO':
         return [
@@ -44,24 +44,20 @@ const Dashboard = ({ user, onLogout }) => {
           { id: 'entry', label: 'New Receipt', icon: Plus },
           { id: 'list', label: 'My Receipts', icon: FileText }
         ];
-      case 'Officer':
-        return [
-          ...commonItems,
-          { id: 'entry', label: 'New Receipt', icon: Plus },
-          { id: 'list', label: 'Committee Receipts', icon: FileText },
-          { id: 'search', label: 'Verify Receipt', icon: Search }
-        ];
       case 'Supervisor':
         return [
           ...commonItems,
           { id: 'analytics', label: 'Committee Analytics', icon: TrendingUp },
+          { id: 'trader-analytics', label: 'Trader Analysis', icon: Users },
           { id: 'list', label: 'Committee Receipts', icon: FileText }
         ];
       case 'JD':
         return [
           ...commonItems,
-          { id: 'analytics', label: 'Committee Analytics', icon: TrendingUp },
-          { id: 'list', label: 'All Receipts', icon: FileText }
+          { id: 'analytics', label: 'State Analytics', icon: TrendingUp },
+          { id: 'trader-analytics', label: 'Trader Analysis', icon: Users },
+          { id: 'list', label: 'All Receipts', icon: FileText },
+          { id: 'user-management', label: 'User Management', icon: Shield }
         ];
       default:
         return commonItems;
@@ -86,13 +82,8 @@ const Dashboard = ({ user, onLogout }) => {
 
     switch (activeTab) {
       case 'entry':
-        if (user.role === 'DEO' || user.role === 'Officer') {
+        if (user.role === 'DEO') {
           return <ReceiptEntry user={user} />;
-        }
-        break;
-      case 'search':
-        if (user.role === 'Officer') {
-          return <ReceiptSearch user={user} />;
         }
         break;
       case 'list':
@@ -100,6 +91,16 @@ const Dashboard = ({ user, onLogout }) => {
       case 'analytics':
         if (user.role === 'Supervisor' || user.role === 'JD') {
           return <Analytics user={user} />;
+        }
+        break;
+      case 'trader-analytics':
+        if (user.role === 'Supervisor' || user.role === 'JD') {
+          return <TraderAnalytics user={user} />;
+        }
+        break;
+      case 'user-management':
+        if (user.role === 'JD') {
+          return <UserManagement user={user} />;
         }
         break;
       case 'overview':
@@ -131,12 +132,12 @@ const Dashboard = ({ user, onLogout }) => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Verified Today</CardTitle>
-                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Active Traders</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">5</div>
-                  <p className="text-xs text-muted-foreground">All verified</p>
+                  <div className="text-2xl font-bold">24</div>
+                  <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
 
@@ -166,7 +167,7 @@ const Dashboard = ({ user, onLogout }) => {
                     <span className="text-sm">System is operational for Tuni AMC</span>
                   </div>
                   
-                  {(user.role === 'DEO' || user.role === 'Officer') && (
+                  {user.role === 'DEO' && (
                     <div className="p-4 bg-blue-50 rounded-lg">
                       <h4 className="font-medium text-blue-900 mb-2">Quick Actions</h4>
                       <div className="space-y-2">
@@ -192,33 +193,64 @@ const Dashboard = ({ user, onLogout }) => {
                     </div>
                   )}
 
-                  {user.role === 'Officer' && (
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <h4 className="font-medium text-green-900 mb-2">Verification Tools</h4>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setActiveTab('search')}
-                        className="w-full justify-start"
-                      >
-                        <Search className="mr-2 h-4 w-4" />
-                        Verify Receipt
-                      </Button>
+                  {user.role === 'Supervisor' && (
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <h4 className="font-medium text-purple-900 mb-2">Supervisor Tools</h4>
+                      <div className="space-y-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setActiveTab('analytics')}
+                          className="w-full justify-start"
+                        >
+                          <TrendingUp className="mr-2 h-4 w-4" />
+                          Committee Analytics
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setActiveTab('trader-analytics')}
+                          className="w-full justify-start"
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Trader Performance
+                        </Button>
+                      </div>
                     </div>
                   )}
 
-                  {(user.role === 'Supervisor' || user.role === 'JD') && (
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <h4 className="font-medium text-purple-900 mb-2">Analytics & Reports</h4>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setActiveTab('analytics')}
-                        className="w-full justify-start"
-                      >
-                        <TrendingUp className="mr-2 h-4 w-4" />
-                        View Analytics
-                      </Button>
+                  {user.role === 'JD' && (
+                    <div className="p-4 bg-red-50 rounded-lg">
+                      <h4 className="font-medium text-red-900 mb-2">Director Tools</h4>
+                      <div className="space-y-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setActiveTab('analytics')}
+                          className="w-full justify-start"
+                        >
+                          <TrendingUp className="mr-2 h-4 w-4" />
+                          State Analytics
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setActiveTab('trader-analytics')}
+                          className="w-full justify-start"
+                        >
+                          <Users className="mr-2 h-4 w-4" />
+                          Trader Analysis
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setActiveTab('user-management')}
+                          className="w-full justify-start"
+                        >
+                          <Shield className="mr-2 h-4 w-4" />
+                          User Management
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>
