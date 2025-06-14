@@ -14,15 +14,21 @@ const Index = () => {
 
   const handleLogin = async (username: string, password: string) => {
     setLoading(true);
+    console.log('Login attempt for username:', username);
+    
     try {
       // Query the profiles table directly using username
+      console.log('Querying profiles table for username:', username);
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('username', username)
         .single();
 
+      console.log('Profile query result:', { profileData, profileError });
+
       if (profileError || !profileData) {
+        console.log('Profile not found or error:', profileError);
         toast({ 
           title: "Login Failed", 
           description: "Invalid username or user not found", 
@@ -32,16 +38,22 @@ const Index = () => {
         return;
       }
 
+      console.log('Profile found:', profileData);
+
       // Get user role
-      const { data: roleData } = await supabase
+      console.log('Querying user roles for user_id:', profileData.id);
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', profileData.id)
         .single();
 
+      console.log('Role query result:', { roleData, roleError });
+
       // Get committee info if profile has committee_id
       let committeeData = null;
       if (profileData.committee_id) {
+        console.log('Querying committee for committee_id:', profileData.committee_id);
         const { data: committee } = await supabase
           .from('committees')
           .select('name')
@@ -51,6 +63,7 @@ const Index = () => {
         if (committee) {
           committeeData = committee;
         }
+        console.log('Committee query result:', committee);
       }
 
       const userProfile = {
@@ -61,6 +74,8 @@ const Index = () => {
         role: roleData?.role || 'DEO',
         committee: committeeData?.name || null
       };
+      
+      console.log('Final user profile:', userProfile);
       
       setCurrentUser(userProfile);
       toast({
