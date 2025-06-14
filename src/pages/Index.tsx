@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Building2, Search, FileText, Users, Shield } from "lucide-react";
@@ -58,7 +59,7 @@ const Index = () => {
         ...user,
         ...data,
         name: data.full_name,
-        role: data.roles?.[0] || 'DEO',
+        role: data.roles?.[0]?.role || 'DEO',
         committee: data.committee?.name || null
       };
       setCurrentUser(userProfile);
