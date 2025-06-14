@@ -14,10 +14,15 @@ BEGIN
       email,
       encrypted_password,
       email_confirmed_at,
+      confirmation_token,
+      recovery_token,
+      email_change_token_new,
+      email_change,
       created_at,
       updated_at,
       raw_app_meta_data,
-      raw_user_meta_data
+      raw_user_meta_data,
+      is_super_admin
     ) VALUES (
       '00000000-0000-0000-0000-000000000000',
       'a1111111-1111-1111-1111-111111111111',
@@ -26,10 +31,15 @@ BEGIN
       'deo@demo.com',
       '$2a$10$8K1p/a0dhrxSHxN1nByIy.x8dvp7Vp6s8rLRHBGwPkP.BjvQC5QGy',
       NOW(),
+      '',
+      '',
+      '',
+      '',
       NOW(),
       NOW(),
       '{"provider": "email", "providers": ["email"]}',
-      '{"full_name": "Demo DEO User", "username": "demo_deo"}'
+      '{"full_name": "Demo DEO User", "username": "demo_deo"}',
+      false
     );
   END IF;
 
@@ -42,10 +52,15 @@ BEGIN
       email,
       encrypted_password,
       email_confirmed_at,
+      confirmation_token,
+      recovery_token,
+      email_change_token_new,
+      email_change,
       created_at,
       updated_at,
       raw_app_meta_data,
-      raw_user_meta_data
+      raw_user_meta_data,
+      is_super_admin
     ) VALUES (
       '00000000-0000-0000-0000-000000000000',
       'a2222222-2222-2222-2222-222222222222',
@@ -54,10 +69,15 @@ BEGIN
       'officer@demo.com',
       '$2a$10$8K1p/a0dhrxSHxN1nByIy.x8dvp7Vp6s8rLRHBGwPkP.BjvQC5QGy',
       NOW(),
+      '',
+      '',
+      '',
+      '',
       NOW(),
       NOW(),
       '{"provider": "email", "providers": ["email"]}',
-      '{"full_name": "Demo Officer User", "username": "demo_officer"}'
+      '{"full_name": "Demo Officer User", "username": "demo_officer"}',
+      false
     );
   END IF;
 
@@ -70,10 +90,15 @@ BEGIN
       email,
       encrypted_password,
       email_confirmed_at,
+      confirmation_token,
+      recovery_token,
+      email_change_token_new,
+      email_change,
       created_at,
       updated_at,
       raw_app_meta_data,
-      raw_user_meta_data
+      raw_user_meta_data,
+      is_super_admin
     ) VALUES (
       '00000000-0000-0000-0000-000000000000',
       'a3333333-3333-3333-3333-333333333333',
@@ -82,10 +107,15 @@ BEGIN
       'supervisor@demo.com',
       '$2a$10$8K1p/a0dhrxSHxN1nByIy.x8dvp7Vp6s8rLRHBGwPkP.BjvQC5QGy',
       NOW(),
+      '',
+      '',
+      '',
+      '',
       NOW(),
       NOW(),
       '{"provider": "email", "providers": ["email"]}',
-      '{"full_name": "Demo Supervisor User", "username": "demo_supervisor"}'
+      '{"full_name": "Demo Supervisor User", "username": "demo_supervisor"}',
+      false
     );
   END IF;
 
@@ -98,10 +128,15 @@ BEGIN
       email,
       encrypted_password,
       email_confirmed_at,
+      confirmation_token,
+      recovery_token,
+      email_change_token_new,
+      email_change,
       created_at,
       updated_at,
       raw_app_meta_data,
-      raw_user_meta_data
+      raw_user_meta_data,
+      is_super_admin
     ) VALUES (
       '00000000-0000-0000-0000-000000000000',
       'a4444444-4444-4444-4444-444444444444',
@@ -110,10 +145,15 @@ BEGIN
       'jd@demo.com',
       '$2a$10$8K1p/a0dhrxSHxN1nByIy.x8dvp7Vp6s8rLRHBGwPkP.BjvQC5QGy',
       NOW(),
+      '',
+      '',
+      '',
+      '',
       NOW(),
       NOW(),
       '{"provider": "email", "providers": ["email"]}',
-      '{"full_name": "Demo Joint Director User", "username": "demo_jd"}'
+      '{"full_name": "Demo Joint Director User", "username": "demo_jd"}',
+      false
     );
   END IF;
 END $$;
