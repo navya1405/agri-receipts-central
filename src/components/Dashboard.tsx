@@ -33,35 +33,32 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const getMenuItems = () => {
-    const commonItems = [
-      { id: 'overview', label: 'Overview', icon: BarChart3 }
-    ];
-
-    // Updated role-based access control for Kakinada district
+    // Updated role-based access control - Overview first, then other items
     switch (user.role) {
       case 'DEO':
         return [
-          ...commonItems,
+          { id: 'overview', label: 'Overview', icon: BarChart3 },
           { id: 'entry', label: 'New Receipt', icon: Plus },
           { id: 'list', label: 'My Receipts', icon: FileText }
         ];
       case 'Supervisor':
         return [
-          ...commonItems,
+          { id: 'overview', label: 'Overview', icon: BarChart3 },
           { id: 'analytics', label: 'Committee Analytics', icon: TrendingUp },
           { id: 'trader-analytics', label: 'Trader Analysis', icon: Users },
           { id: 'list', label: 'Committee Receipts', icon: FileText }
         ];
       case 'JD':
         return [
-          ...commonItems,
+          { id: 'overview', label: 'Overview', icon: BarChart3 },
           { id: 'analytics', label: 'District Analytics', icon: TrendingUp },
-          { id: 'trader-analytics', label: 'Trader Analysis', icon: Users },
           { id: 'list', label: 'All Receipts', icon: FileText },
           { id: 'user-management', label: 'User Management', icon: Shield }
         ];
       default:
-        return commonItems;
+        return [
+          { id: 'overview', label: 'Overview', icon: BarChart3 }
+        ];
     }
   };
 
@@ -108,7 +105,7 @@ const Dashboard = ({ user, onLogout }) => {
         }
         break;
       case 'trader-analytics':
-        if (user.role === 'Supervisor' || user.role === 'JD') {
+        if (user.role === 'Supervisor') {
           return <TraderAnalytics user={user} />;
         }
         break;
@@ -274,15 +271,6 @@ const Dashboard = ({ user, onLogout }) => {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => setActiveTab('trader-analytics')}
-                          className="w-full justify-start"
-                        >
-                          <Users className="mr-2 h-4 w-4" />
-                          District Trader Analysis
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
                           onClick={() => setActiveTab('user-management')}
                           className="w-full justify-start"
                         >
@@ -336,7 +324,7 @@ const Dashboard = ({ user, onLogout }) => {
               <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-                  {user.role === 'JD' ? 'Kakinada District AMC System' : 'Kakinada AMC System'}
+                  {user.role === 'JD' ? 'East Godavari District AMC System' : 'Kakinada AMC System'}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
                   {user.role === 'JD' 

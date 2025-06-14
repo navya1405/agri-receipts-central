@@ -90,11 +90,34 @@ const Analytics = ({ user }: { user: any }) => {
 
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0', '#ffb347'];
 
+  // Determine analytics scope based on user role
+  const getAnalyticsTitle = () => {
+    switch (user.role) {
+      case 'JD':
+        return 'District Analytics Dashboard';
+      case 'Supervisor':
+        return 'Committee Analytics Dashboard';
+      default:
+        return 'Analytics Dashboard';
+    }
+  };
+
+  const getAnalyticsDescription = () => {
+    switch (user.role) {
+      case 'JD':
+        return 'Comprehensive overview of AMC receipts across East Godavari District';
+      case 'Supervisor':
+        return 'Committee-level analysis of receipts and trading activity';
+      default:
+        return 'Analysis of receipts and trading activity';
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">State Analytics Dashboard</h2>
-        <p className="text-gray-600">Comprehensive overview of AMC receipts across Andhra Pradesh</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{getAnalyticsTitle()}</h2>
+        <p className="text-gray-600">{getAnalyticsDescription()}</p>
       </div>
 
       {/* Summary Cards */}
@@ -105,7 +128,9 @@ const Analytics = ({ user }: { user: any }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalReceipts.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">All time count</p>
+            <p className="text-xs text-muted-foreground">
+              {user.role === 'JD' ? 'District total' : user.role === 'Supervisor' ? 'Committee total' : 'All time count'}
+            </p>
           </CardContent>
         </Card>
 
@@ -142,11 +167,15 @@ const Analytics = ({ user }: { user: any }) => {
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* District-wise Distribution */}
+        {/* Committee/District-wise Distribution */}
         <Card>
           <CardHeader>
-            <CardTitle>District-wise Receipt Distribution</CardTitle>
-            <CardDescription>Number of receipts by district</CardDescription>
+            <CardTitle>
+              {user.role === 'JD' ? 'Committee-wise Receipt Distribution' : 'District-wise Receipt Distribution'}
+            </CardTitle>
+            <CardDescription>
+              {user.role === 'JD' ? 'Number of receipts by committee' : 'Number of receipts by district'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -217,8 +246,12 @@ const Analytics = ({ user }: { user: any }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>District Performance</CardTitle>
-            <CardDescription>Detailed district-wise breakdown</CardDescription>
+            <CardTitle>
+              {user.role === 'JD' ? 'Committee Performance' : 'District Performance'}
+            </CardTitle>
+            <CardDescription>
+              {user.role === 'JD' ? 'Detailed committee-wise breakdown' : 'Detailed district-wise breakdown'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
