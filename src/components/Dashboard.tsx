@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, LogOut, FileText, Search, BarChart3, Users, Plus, Download, TrendingUp } from "lucide-react";
+import { Building2, LogOut, FileText, Search, BarChart3, Users, Plus, Download, TrendingUp, Menu, X } from "lucide-react";
 import ReceiptEntry from "./ReceiptEntry";
 import ReceiptSearch from "./ReceiptSearch";
 import ReceiptList from "./ReceiptList";
@@ -11,6 +11,7 @@ import Analytics from "./Analytics";
 
 const Dashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (!user) {
     return (
@@ -105,7 +106,7 @@ const Dashboard = ({ user, onLogout }) => {
       default:
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Receipts</CardTitle>
@@ -235,52 +236,86 @@ const Dashboard = ({ user, onLogout }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <Building2 className="h-8 w-8 text-blue-600" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+              <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Tuni AMC System</h1>
-                <p className="text-sm text-gray-600">Agricultural Market Committee Receipt Management</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Tuni AMC System</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Agricultural Market Committee Receipt Management</p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.name || user.email}</p>
-                <div className="flex items-center space-x-2">
-                  <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
-                  <span className="text-xs text-gray-500">Tuni AMC</span>
+                <p className="text-xs sm:text-sm font-medium text-gray-900 truncate max-w-32 sm:max-w-none">{user.name || user.email}</p>
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <Badge className={`text-xs ${getRoleColor(user.role)}`}>{user.role}</Badge>
+                  <span className="text-xs text-gray-500 hidden sm:inline">Tuni AMC</span>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={onLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                <LogOut className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+          {/* Mobile Overlay */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
           {/* Sidebar Navigation */}
-          <div className="lg:w-64">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Navigation</CardTitle>
+          <div className={`
+            fixed lg:static inset-y-0 left-0 z-50 lg:z-auto
+            w-64 lg:w-64 transform transition-transform duration-300 ease-in-out
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            lg:block
+          `}>
+            <Card className="h-full lg:h-auto">
+              <CardHeader className="lg:block">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  Navigation
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="lg:hidden"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <nav className="space-y-1">
                   {getMenuItems().map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-none hover:bg-gray-50 ${
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-none hover:bg-gray-50 transition-colors ${
                         activeTab === item.id 
                           ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                           : 'text-gray-700'
                       }`}
                     >
-                      <item.icon className="mr-3 h-4 w-4" />
-                      {item.label}
+                      <item.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
                     </button>
                   ))}
                 </nav>
@@ -289,7 +324,7 @@ const Dashboard = ({ user, onLogout }) => {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {renderContent()}
           </div>
         </div>

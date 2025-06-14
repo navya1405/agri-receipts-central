@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Download, Search, Edit, Eye } from "lucide-react";
+import { FileText, Download, Search, Edit, Eye, Filter } from "lucide-react";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,6 +28,7 @@ const ReceiptList = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCommittee, setFilterCommittee] = useState('all');
   const [filterCommodity, setFilterCommodity] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
   
   const { data: receipts, isLoading: receiptsLoading } = useQuery({ queryKey: ['receipts'], queryFn: fetchReceipts});
   const { data: committees, isLoading: committeesLoading } = useQuery({ queryKey: ['committees'], queryFn: fetchCommittees });
@@ -104,87 +105,184 @@ const ReceiptList = ({ user }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <span className="flex items-center">
-              <FileText className="mr-2 h-5 w-5" />
-              {getTitle()}
+              <FileText className="mr-2 h-5 w-5 flex-shrink-0" />
+              <span className="truncate">{getTitle()}</span>
             </span>
             {(user.role === 'Supervisor' || user.role === 'JD') && (
-              <Button onClick={handleExport} variant="outline">
+              <Button onClick={handleExport} variant="outline" size="sm" className="w-full sm:w-auto">
                 <Download className="mr-2 h-4 w-4" />
                 Export CSV
               </Button>
             )}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm">
             {getDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <Label htmlFor="search" className="sr-only">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  id="search"
-                  placeholder="Search by seller, buyer, receipt number, or book number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Search and Filters */}
+          <div className="space-y-4 mb-6">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <div className="flex-1">
+                <Label htmlFor="search" className="sr-only">Search</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="search"
+                    placeholder="Search receipts..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-            </div>
-            
-            <div className="w-full md:w-48">
-              <Select value={filterCommittee} onValueChange={setFilterCommittee} disabled={committeesLoading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by committee" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Committees</SelectItem>
-                  {committees?.map((committee) => (
-                    <SelectItem key={committee.name} value={committee.name}>
-                      {committee.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="sm:hidden w-full"
+              >
+                <Filter className="mr-2 h-4 w-4" />
+                Filters
+              </Button>
             </div>
 
-            <div className="w-full md:w-48">
-              <Select value={filterCommodity} onValueChange={setFilterCommodity} disabled={receiptsLoading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by commodity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Commodities</SelectItem>
-                  {commodities.map((commodity) => (
-                    <SelectItem key={commodity} value={commodity}>
-                      {commodity}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Desktop Filters or Mobile Expanded Filters */}
+            <div className={`${showFilters ? 'block' : 'hidden'} sm:block`}>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <div className="w-full sm:w-48">
+                  <Select value={filterCommittee} onValueChange={setFilterCommittee} disabled={committeesLoading}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by committee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Committees</SelectItem>
+                      {committees?.map((committee) => (
+                        <SelectItem key={committee.name} value={committee.name}>
+                          {committee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full sm:w-48">
+                  <Select value={filterCommodity} onValueChange={setFilterCommodity} disabled={receiptsLoading}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by commodity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Commodities</SelectItem>
+                      {commodities.map((commodity) => (
+                        <SelectItem key={commodity} value={commodity}>
+                          {commodity}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="border rounded-lg">
+          {/* Mobile Cards View */}
+          <div className="block sm:hidden space-y-4">
+            {receiptsLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="p-4">
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-3 w-1/2 mb-2" />
+                    <Skeleton className="h-3 w-full" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : filteredReceipts.length > 0 ? (
+              filteredReceipts.map((receipt: any) => (
+                <Card key={receipt.id}>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{receipt.receipt_number}</p>
+                        <p className="text-xs text-gray-500">{receipt.book_number}</p>
+                      </div>
+                      <Badge className="bg-green-100 text-green-800 ml-2">
+                        {receipt.status}
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Date:</span>
+                        <span>{new Date(receipt.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Seller:</span>
+                        <span className="truncate ml-2">{receipt.seller_name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Buyer:</span>
+                        <span className="truncate ml-2">{receipt.buyer_name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Commodity:</span>
+                        <span>{receipt.commodity}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Quantity:</span>
+                        <span>{receipt.quantity} Q</span>
+                      </div>
+                      <div className="flex justify-between font-medium">
+                        <span className="text-gray-500">Value:</span>
+                        <span>₹{Number(receipt.value).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2 mt-3">
+                      <Button variant="outline" size="sm" className="flex-1">
+                        <Eye className="h-3 w-3 mr-1" />
+                        View
+                      </Button>
+                      {(user.role === 'DEO' && receipt.created_by === user.id) && (
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-gray-500">No receipts found</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden sm:block border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Book/Receipt</TableHead>
-                  <TableHead>Seller</TableHead>
-                  <TableHead>Buyer</TableHead>
-                  <TableHead>Commodity</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead className="min-w-[100px]">Date</TableHead>
+                  <TableHead className="min-w-[120px]">Book/Receipt</TableHead>
+                  <TableHead className="min-w-[150px]">Seller</TableHead>
+                  <TableHead className="min-w-[150px]">Buyer</TableHead>
+                  <TableHead className="min-w-[100px]">Commodity</TableHead>
+                  <TableHead className="min-w-[80px]">Quantity</TableHead>
+                  <TableHead className="min-w-[100px]">Value</TableHead>
+                  <TableHead className="min-w-[80px]">Status</TableHead>
+                  <TableHead className="min-w-[120px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -208,14 +306,14 @@ const ReceiptList = ({ user }) => {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium">{receipt.seller_name}</div>
-                          <div className="text-gray-500">{receipt.sellerCommittee}</div>
+                          <div className="font-medium truncate max-w-[120px]">{receipt.seller_name}</div>
+                          <div className="text-gray-500 truncate max-w-[120px]">{receipt.sellerCommittee}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium">{receipt.buyer_name}</div>
-                          <div className="text-gray-500">{receipt.buyerCommittee}</div>
+                          <div className="font-medium truncate max-w-[120px]">{receipt.buyer_name}</div>
+                          <div className="text-gray-500 truncate max-w-[120px]">{receipt.buyerCommittee}</div>
                         </div>
                       </TableCell>
                       <TableCell>{receipt.commodity}</TableCell>
@@ -253,11 +351,13 @@ const ReceiptList = ({ user }) => {
               </TableBody>
             </Table>
           </div>
-          <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+
+          {/* Summary Footer */}
+          <div className="mt-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-sm text-gray-600">
             <span>
               Showing {filteredReceipts.length} of {allReceipts.length} receipts
             </span>
-            <span>
+            <span className="font-medium">
               Total Value: ₹{filteredReceipts.reduce((sum, receipt: any) => sum + Number(receipt.value), 0).toLocaleString()}
             </span>
           </div>
