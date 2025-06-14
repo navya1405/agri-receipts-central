@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, LogOut, FileText, Search, BarChart3, Users, Plus, Download } from "lucide-react";
+import { Building2, LogOut, FileText, Search, BarChart3, Users, Plus, Download, TrendingUp } from "lucide-react";
 import ReceiptEntry from "./ReceiptEntry";
 import ReceiptSearch from "./ReceiptSearch";
 import ReceiptList from "./ReceiptList";
+import Analytics from "./Analytics";
 
 const Dashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -55,6 +56,7 @@ const Dashboard = ({ user, onLogout }) => {
       case 'JD':
         return [
           ...commonItems,
+          { id: 'analytics', label: 'State Analytics', icon: TrendingUp },
           { id: 'list', label: 'All Receipts', icon: FileText },
           { id: 'users', label: 'Manage Users', icon: Users },
           { id: 'export', label: 'Export Data', icon: Download }
@@ -72,6 +74,8 @@ const Dashboard = ({ user, onLogout }) => {
         return <ReceiptSearch user={user} />;
       case 'list':
         return <ReceiptList user={user} />;
+      case 'analytics':
+        return <Analytics user={user} />;
       case 'overview':
       default:
         return (
@@ -126,7 +130,7 @@ const Dashboard = ({ user, onLogout }) => {
               <CardHeader>
                 <CardTitle>Welcome to AMC Receipt System</CardTitle>
                 <CardDescription>
-                  Digital management of agricultural market committee trade receipts
+                  Digital management of agricultural market committee trade receipts across Andhra Pradesh
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -176,6 +180,36 @@ const Dashboard = ({ user, onLogout }) => {
                       </Button>
                     </div>
                   )}
+
+                  {user.role === 'JD' && (
+                    <div className="p-4 bg-red-50 rounded-lg">
+                      <h4 className="font-medium text-red-900 mb-2">State Analytics</h4>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setActiveTab('analytics')}
+                        className="w-full justify-start"
+                      >
+                        <TrendingUp className="mr-2 h-4 w-4" />
+                        View State Analytics
+                      </Button>
+                    </div>
+                  )}
+
+                  {user.role === 'Supervisor' && (
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <h4 className="font-medium text-purple-900 mb-2">Committee Management</h4>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setActiveTab('list')}
+                        className="w-full justify-start"
+                      >
+                        <FileText className="mr-2 h-4 w-4" />
+                        View Committee Receipts
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -194,7 +228,7 @@ const Dashboard = ({ user, onLogout }) => {
               <Building2 className="h-8 w-8 text-blue-600" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">AMC Receipt System</h1>
-                <p className="text-sm text-gray-600">Agricultural Market Committee</p>
+                <p className="text-sm text-gray-600">Andhra Pradesh Agricultural Market Committee</p>
               </div>
             </div>
             

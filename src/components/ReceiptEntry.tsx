@@ -29,9 +29,10 @@ const commodities = [
 const ReceiptEntry = ({ user }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [formData, setFormData] = useState({
-    source_committee_id: '',
-    dest_committee_id: '',
-    trader_name: '',
+    seller_committee_id: '',
+    buyer_committee_id: '',
+    seller_name: '',
+    buyer_name: '',
     book_number: '',
     receipt_number: '',
     commodity: '',
@@ -86,9 +87,10 @@ const ReceiptEntry = ({ user }) => {
 
   const handleReset = () => {
     setFormData({
-      source_committee_id: '',
-      dest_committee_id: '',
-      trader_name: '',
+      seller_committee_id: '',
+      buyer_committee_id: '',
+      seller_name: '',
+      buyer_name: '',
       book_number: '',
       receipt_number: '',
       commodity: '',
@@ -107,7 +109,7 @@ const ReceiptEntry = ({ user }) => {
           New Receipt Entry
         </CardTitle>
         <CardDescription>
-          Enter details for a new AMC trade receipt
+          Enter details for a new AMC trade receipt between seller and buyer
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -135,50 +137,63 @@ const ReceiptEntry = ({ user }) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sourceCommittee">Source Committee</Label>
-              <Select value={formData.source_committee_id} onValueChange={(value) => handleInputChange('source_committee_id', value)} disabled={committeesLoading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select source committee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {committees?.map((committee) => (
-                    <SelectItem key={committee.id} value={committee.id}>
-                      {committee.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="destCommittee">Destination Committee</Label>
-              <Select value={formData.dest_committee_id} onValueChange={(value) => handleInputChange('dest_committee_id', value)} disabled={committeesLoading}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select destination committee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {committees?.map((committee) => (
-                    <SelectItem key={committee.id} value={committee.id}>
-                      {committee.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="traderName">Trader Name</Label>
-              <Input id="traderName" placeholder="Enter trader name" value={formData.trader_name} onChange={(e) => handleInputChange('trader_name', e.target.value)} required />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="bookNumber">Book Number</Label>
               <Input id="bookNumber" placeholder="Enter book number" value={formData.book_number} onChange={(e) => handleInputChange('book_number', e.target.value)} required />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="receiptNumber">Receipt Number</Label>
               <Input id="receiptNumber" placeholder="Enter receipt number" value={formData.receipt_number} onChange={(e) => handleInputChange('receipt_number', e.target.value)} required />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Seller Section */}
+            <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
+              <h3 className="font-medium text-blue-900">Seller Details</h3>
+              <div className="space-y-2">
+                <Label htmlFor="sellerName">Seller Name</Label>
+                <Input id="sellerName" placeholder="Enter seller name" value={formData.seller_name} onChange={(e) => handleInputChange('seller_name', e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sellerCommittee">Seller Committee</Label>
+                <Select value={formData.seller_committee_id} onValueChange={(value) => handleInputChange('seller_committee_id', value)} disabled={committeesLoading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select seller committee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {committees?.map((committee) => (
+                      <SelectItem key={committee.id} value={committee.id}>
+                        {committee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Buyer Section */}
+            <div className="space-y-4 p-4 border rounded-lg bg-green-50">
+              <h3 className="font-medium text-green-900">Buyer Details</h3>
+              <div className="space-y-2">
+                <Label htmlFor="buyerName">Buyer Name</Label>
+                <Input id="buyerName" placeholder="Enter buyer name" value={formData.buyer_name} onChange={(e) => handleInputChange('buyer_name', e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="buyerCommittee">Buyer Committee</Label>
+                <Select value={formData.buyer_committee_id} onValueChange={(value) => handleInputChange('buyer_committee_id', value)} disabled={committeesLoading}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select buyer committee" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {committees?.map((committee) => (
+                      <SelectItem key={committee.id} value={committee.id}>
+                        {committee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

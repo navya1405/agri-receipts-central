@@ -77,69 +77,72 @@ export type Database = {
       receipts: {
         Row: {
           book_number: string
+          buyer_committee_id: string
+          buyer_name: string
           commodity: string
           created_at: string
           created_by: string
           date: string
-          dest_committee_id: string
           fees_paid: number
           id: string
           quantity: number
           receipt_number: string
-          source_committee_id: string
+          seller_committee_id: string
+          seller_name: string
           status: string | null
           trader_license: string | null
-          trader_name: string
           updated_at: string
           value: number
         }
         Insert: {
           book_number: string
+          buyer_committee_id: string
+          buyer_name: string
           commodity: string
           created_at?: string
           created_by: string
           date: string
-          dest_committee_id: string
           fees_paid: number
           id?: string
           quantity: number
           receipt_number: string
-          source_committee_id: string
+          seller_committee_id: string
+          seller_name: string
           status?: string | null
           trader_license?: string | null
-          trader_name: string
           updated_at?: string
           value: number
         }
         Update: {
           book_number?: string
+          buyer_committee_id?: string
+          buyer_name?: string
           commodity?: string
           created_at?: string
           created_by?: string
           date?: string
-          dest_committee_id?: string
           fees_paid?: number
           id?: string
           quantity?: number
           receipt_number?: string
-          source_committee_id?: string
+          seller_committee_id?: string
+          seller_name?: string
           status?: string | null
           trader_license?: string | null
-          trader_name?: string
           updated_at?: string
           value?: number
         }
         Relationships: [
           {
-            foreignKeyName: "receipts_dest_committee_id_fkey"
-            columns: ["dest_committee_id"]
+            foreignKeyName: "receipts_buyer_committee_id_fkey"
+            columns: ["buyer_committee_id"]
             isOneToOne: false
             referencedRelation: "committees"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "receipts_source_committee_id_fkey"
-            columns: ["source_committee_id"]
+            foreignKeyName: "receipts_seller_committee_id_fkey"
+            columns: ["seller_committee_id"]
             isOneToOne: false
             referencedRelation: "committees"
             referencedColumns: ["id"]

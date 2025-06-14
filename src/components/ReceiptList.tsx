@@ -13,14 +13,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const fetchReceipts = async () => {
-  const { data, error } = await supabase
-    .from('receipts')
-    .select('*, source_committee:committees(name), dest_committee:committees(name)')
-    .order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  
-  // The join is tricky, so let's just fetch and map later if needed.
-  // The RLS policy will filter data automatically for the logged-in user.
   const { data: rawReceipts, error: rawError } = await supabase.from('receipts').select('*').order('created_at', {ascending: false});
   if(rawError) throw new Error(rawError.message);
   return rawReceipts;
@@ -49,8 +41,8 @@ const ReceiptList = ({ user }) => {
       if (!receipts) return [];
       return receipts.map(r => ({
           ...r,
-          sourceCommittee: committeeMap.get(r.source_committee_id) || 'Loading...',
-          destCommittee: committeeMap.get(r.dest_committee_id) || 'Loading...'
+          sellerCommittee: committeeMap.get(r.seller_committee_id) || 'Loading...',
+          buyerCommittee: committeeMap.get(r.buyer_committee_id) || 'Loading...'
       }));
   }, [receipts, committeeMap]);
 
@@ -60,15 +52,16 @@ const ReceiptList = ({ user }) => {
   }, [receipts]);
 
   const filteredReceipts = allReceipts.filter(receipt => {
-    const r = receipt as any; // temp any to fix build
+    const r = receipt as any;
     const matchesSearch = searchTerm === '' || 
-      (r.trader_name && r.trader_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (r.seller_name && r.seller_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (r.buyer_name && r.buyer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (r.receipt_number && r.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (r.book_number && r.book_number.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCommittee = filterCommittee === 'all' || 
-      r.sourceCommittee === filterCommittee || 
-      r.destCommittee === filterCommittee;
+      r.sellerCommittee === filterCommittee || 
+      r.buyerCommittee === filterCommittee;
     
     const matchesCommodity = filterCommodity === 'all' || 
       r.commodity === filterCommodity;
@@ -78,9 +71,9 @@ const ReceiptList = ({ user }) => {
 
   const handleExport = () => {
     const csvContent = "data:text/csv;charset=utf-8," 
-      + "Date,Book Number,Receipt Number,Trader Name,Source Committee,Destination Committee,Commodity,Quantity,Value,Fees Paid\n"
+      + "Date,Book Number,Receipt Number,Seller Name,Buyer Name,Seller Committee,Buyer Committee,Commodity,Quantity,Value,Fees Paid\n"
       + filteredReceipts.map((receipt: any) => 
-          `${receipt.date},${receipt.book_number},${receipt.receipt_number},${receipt.trader_name},${receipt.sourceCommittee},${receipt.destCommittee},${receipt.commodity},${receipt.quantity},${receipt.value},${receipt.fees_paid}`
+          `${receipt.date},${receipt.book_number},${receipt.receipt_number},${receipt.seller_name},${receipt.buyer_name},${receipt.sellerCommittee},${receipt.buyerCommittee},${receipt.commodity},${receipt.quantity},${receipt.value},${receipt.fees_paid}`
         ).join("\n");
 
     const encodedUri = encodeURI(csvContent);
@@ -91,18 +84,43 @@ const ReceiptList = ({ user }) => {
     link.click();
     document.body.removeChild(link);
   };
-  
-  // ... getTitle and getDescription are fine
+
+  const getTitle = () => {
+    switch (user.role) {
+      case 'DEO': return 'My Receipts';
+      case 'Supervisor': return 'Committee Receipts';
+      case 'JD': return 'All Receipts';
+      default: return 'Receipts';
+    }
+  };
+
+  const getDescription = () => {
+    switch (user.role) {
+      case 'DEO': return 'View and manage receipts you have created';
+      case 'Supervisor': return 'View receipts for your assigned committee';
+      case 'JD': return 'Complete overview of all receipts in the system';
+      default: return 'View receipt records';
+    }
+  };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            {/* ... title */}
+            <span className="flex items-center">
+              <FileText className="mr-2 h-5 w-5" />
+              {getTitle()}
+            </span>
+            {(user.role === 'Supervisor' || user.role === 'JD') && (
+              <Button onClick={handleExport} variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+            )}
           </CardTitle>
           <CardDescription>
-            {/* ... description */}
+            {getDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -113,7 +131,7 @@ const ReceiptList = ({ user }) => {
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
-                  placeholder="Search by trader name, receipt number, or book number..."
+                  placeholder="Search by seller, buyer, receipt number, or book number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -160,8 +178,8 @@ const ReceiptList = ({ user }) => {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Book/Receipt</TableHead>
-                  <TableHead>Trader</TableHead>
-                  <TableHead>Route</TableHead>
+                  <TableHead>Seller</TableHead>
+                  <TableHead>Buyer</TableHead>
                   <TableHead>Commodity</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead>Value</TableHead>
@@ -188,11 +206,16 @@ const ReceiptList = ({ user }) => {
                           <div className="text-gray-500">{receipt.receipt_number}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{receipt.trader_name}</TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div>{receipt.sourceCommittee}</div>
-                          <div className="text-gray-500">→ {receipt.destCommittee}</div>
+                          <div className="font-medium">{receipt.seller_name}</div>
+                          <div className="text-gray-500">{receipt.sellerCommittee}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium">{receipt.buyer_name}</div>
+                          <div className="text-gray-500">{receipt.buyerCommittee}</div>
                         </div>
                       </TableCell>
                       <TableCell>{receipt.commodity}</TableCell>
