@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,37 +105,37 @@ const ReceiptEntry = ({ user }) => {
             
             console.log(`Checking committee: "${c.name}" (code: "${c.code}") against user committee: "${user.committee}"`);
             
-            // Exact matches
+            // First try exact matches
             if (dbNameLower === userCommitteeLower || dbCodeLower === userCommitteeLower) {
               console.log('Found exact match:', c.name);
               return true;
             }
             
-            // Check if user committee is contained in database name
-            if (dbNameLower.includes(userCommitteeLower)) {
-              console.log('Found partial match (user in db):', c.name);
+            // Special handling for specific known mappings
+            if (userCommitteeLower === 'tuni amc' && dbNameLower.includes('tuni agricultural market committee')) {
+              console.log('Found specific Tuni AMC match:', c.name);
               return true;
             }
             
-            // Check if database name is contained in user committee
-            if (userCommitteeLower.includes(dbNameLower)) {
-              console.log('Found partial match (db in user):', c.name);
+            if (userCommitteeLower === 'kakinada amc' && dbNameLower.includes('kakinada agricultural market committee')) {
+              console.log('Found specific Kakinada AMC match:', c.name);
               return true;
             }
             
-            // Special handling for "Tuni" variations
-            const userContainsTuni = userCommitteeLower.includes('tuni');
-            const dbContainsTuni = dbNameLower.includes('tuni');
-            if (userContainsTuni && dbContainsTuni) {
-              console.log('Found Tuni match:', c.name);
+            // Generic partial matching (more conservative)
+            if (userCommitteeLower.includes('tuni') && dbNameLower.includes('tuni')) {
+              console.log('Found Tuni partial match:', c.name);
               return true;
             }
             
-            // Special handling for "AMC" variations
-            const userContainsAMC = userCommitteeLower.includes('amc');
-            const dbContainsAMC = dbNameLower.includes('agricultural market committee') || dbCodeLower.includes('amc');
-            if (userContainsAMC && dbContainsAMC) {
-              console.log('Found AMC match:', c.name);
+            if (userCommitteeLower.includes('kakinada') && dbNameLower.includes('kakinada')) {
+              console.log('Found Kakinada partial match:', c.name);
+              return true;
+            }
+            
+            // Code matching
+            if (dbCodeLower === userCommitteeLower) {
+              console.log('Found code match:', c.name);
               return true;
             }
             
