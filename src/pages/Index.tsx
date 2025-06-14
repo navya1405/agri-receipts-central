@@ -40,7 +40,7 @@ const Index = () => {
     };
   }, []);
 
-  const fetchUserProfile = async (user) => {
+  const fetchUserProfile = async (user: any) => {
     const { data, error } = await supabase
       .from('profiles')
       .select(`

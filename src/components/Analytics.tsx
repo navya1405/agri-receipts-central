@@ -1,357 +1,257 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart3, TrendingUp, FileText, Building2, Users, IndianRupee } from "lucide-react";
-import { useQuery } from '@tanstack/react-query';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from "@/hooks/use-toast";
 
-const fetchAnalyticsData = async () => {
-  const { data: receipts, error: receiptsError } = await supabase.from('receipts').select('*');
-  const { data: committees, error: committeesError } = await supabase.from('committees').select('*');
-  
-  if (receiptsError) throw new Error(receiptsError.message);
-  if (committeesError) throw new Error(committeesError.message);
-  
-  return { receipts, committees };
-};
+const Analytics = ({ user }: { user: any }) => {
+  const [receiptsData, setReceiptsData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-const Analytics = ({ user }) => {
-  const [selectedDistrict, setSelectedDistrict] = useState('all');
-  const [selectedPeriod, setSelectedPeriod] = useState('all');
-  
-  const { data, isLoading } = useQuery({ 
-    queryKey: ['analytics'], 
-    queryFn: fetchAnalyticsData,
-    enabled: user.role === 'JD'
-  });
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, []);
 
-  const districts = useMemo(() => {
-    if (!data?.committees) return [];
-    return [...new Set(data.committees.map(c => c.district))].filter(Boolean);
-  }, [data?.committees]);
+  const fetchAnalyticsData = async () => {
+    try {
+      const { data: receipts, error } = await supabase
+        .from('receipts')
+        .select(`
+          *,
+          seller_committee:seller_committee_id(name, district),
+          buyer_committee:buyer_committee_id(name, district)
+        `);
 
-  const filteredData = useMemo(() => {
-    if (!data?.receipts || !data?.committees) return { receipts: [], committees: [] };
-    
-    let filteredReceipts = data.receipts;
-    let filteredCommittees = data.committees;
-
-    if (selectedDistrict !== 'all') {
-      const districtCommitteeIds = data.committees
-        .filter(c => c.district === selectedDistrict)
-        .map(c => c.id);
-      
-      filteredReceipts = data.receipts.filter(r => 
-        districtCommitteeIds.includes(r.seller_committee_id) || 
-        districtCommitteeIds.includes(r.buyer_committee_id)
-      );
-      
-      filteredCommittees = data.committees.filter(c => c.district === selectedDistrict);
+      if (error) throw error;
+      setReceiptsData(receipts || []);
+    } catch (error: any) {
+      toast({
+        title: "Error fetching analytics data",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (selectedPeriod !== 'all') {
-      const now = new Date();
-      let cutoffDate = new Date();
-      
-      switch (selectedPeriod) {
-        case 'week':
-          cutoffDate.setDate(now.getDate() - 7);
-          break;
-        case 'month':
-          cutoffDate.setMonth(now.getMonth() - 1);
-          break;
-        case 'quarter':
-          cutoffDate.setMonth(now.getMonth() - 3);
-          break;
-        case 'year':
-          cutoffDate.setFullYear(now.getFullYear() - 1);
-          break;
-      }
-      
-      filteredReceipts = filteredReceipts.filter(r => 
-        new Date(r.created_at) >= cutoffDate
-      );
-    }
-
-    return { receipts: filteredReceipts, committees: filteredCommittees };
-  }, [data, selectedDistrict, selectedPeriod]);
-
-  const analytics = useMemo(() => {
-    if (!filteredData.receipts.length) {
-      return {
-        totalReceipts: 0,
-        totalValue: 0,
-        totalFees: 0,
-        avgValue: 0,
-        topCommodities: [],
-        committeeStats: [],
-        districtStats: []
-      };
-    }
-
-    const receipts = filteredData.receipts;
-    const committees = filteredData.committees;
-    
-    const totalReceipts = receipts.length;
-    const totalValue = receipts.reduce((sum, r) => sum + Number(r.value), 0);
-    const totalFees = receipts.reduce((sum, r) => sum + Number(r.fees_paid), 0);
-    const avgValue = totalValue / totalReceipts;
-
-    // Top commodities
-    const commodityStats = receipts.reduce((acc, r) => {
-      acc[r.commodity] = (acc[r.commodity] || 0) + Number(r.value);
-      return acc;
-    }, {});
-    
-    const topCommodities = Object.entries(commodityStats)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([commodity, value]) => ({ commodity, value }));
-
-    // Committee stats
-    const committeeMap = new Map(committees.map(c => [c.id, c]));
-    const committeeStats = receipts.reduce((acc, r) => {
-      const sellerCommittee = committeeMap.get(r.seller_committee_id);
-      const buyerCommittee = committeeMap.get(r.buyer_committee_id);
-      
-      if (sellerCommittee) {
-        const key = sellerCommittee.name;
-        acc[key] = (acc[key] || 0) + 1;
-      }
-      if (buyerCommittee && buyerCommittee.id !== r.seller_committee_id) {
-        const key = buyerCommittee.name;
-        acc[key] = (acc[key] || 0) + 1;
-      }
-      
-      return acc;
-    }, {});
-
-    const topCommittees = Object.entries(committeeStats)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([committee, count]) => ({ committee, count }));
-
-    // District stats
-    const districtStats = receipts.reduce((acc, r) => {
-      const sellerCommittee = committeeMap.get(r.seller_committee_id);
-      const buyerCommittee = committeeMap.get(r.buyer_committee_id);
-      
-      if (sellerCommittee?.district) {
-        acc[sellerCommittee.district] = (acc[sellerCommittee.district] || 0) + Number(r.value);
-      }
-      if (buyerCommittee?.district && buyerCommittee.district !== sellerCommittee?.district) {
-        acc[buyerCommittee.district] = (acc[buyerCommittee.district] || 0) + Number(r.value);
-      }
-      
-      return acc;
-    }, {});
-
-    const topDistricts = Object.entries(districtStats)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 5)
-      .map(([district, value]) => ({ district, value }));
-
-    return {
-      totalReceipts,
-      totalValue,
-      totalFees,
-      avgValue,
-      topCommodities,
-      committeeStats: topCommittees,
-      districtStats: topDistricts
-    };
-  }, [filteredData]);
-
-  if (user.role !== 'JD') {
+  if (loading) {
     return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <p className="text-gray-500">Analytics access is restricted to JD users only.</p>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <div className="text-center py-8">Loading analytics data...</div>
+      </div>
     );
   }
 
+  // Process data for charts
+  const districtData = receiptsData.reduce((acc: any, receipt) => {
+    const district = receipt.seller_committee?.district || 'Unknown';
+    if (!acc[district]) {
+      acc[district] = { district, count: 0, value: 0 };
+    }
+    acc[district].count += 1;
+    acc[district].value += Number(receipt.value) || 0;
+    return acc;
+  }, {});
+
+  const districtChartData = Object.values(districtData);
+
+  const commodityData = receiptsData.reduce((acc: any, receipt) => {
+    const commodity = receipt.commodity || 'Unknown';
+    if (!acc[commodity]) {
+      acc[commodity] = { commodity, count: 0, value: 0 };
+    }
+    acc[commodity].count += 1;
+    acc[commodity].value += Number(receipt.value) || 0;
+    return acc;
+  }, {});
+
+  const commodityChartData = Object.values(commodityData).slice(0, 10); // Top 10 commodities
+
+  // Monthly trend data
+  const monthlyData = receiptsData.reduce((acc: any, receipt) => {
+    const month = new Date(receipt.date).toLocaleString('default', { month: 'short', year: 'numeric' });
+    if (!acc[month]) {
+      acc[month] = { month, count: 0, value: 0 };
+    }
+    acc[month].count += 1;
+    acc[month].value += Number(receipt.value) || 0;
+    return acc;
+  }, {});
+
+  const monthlyChartData = Object.values(monthlyData);
+
+  const totalReceipts = receiptsData.length;
+  const totalValue = receiptsData.reduce((sum, receipt) => sum + (Number(receipt.value) || 0), 0);
+  const totalQuantity = receiptsData.reduce((sum, receipt) => sum + (Number(receipt.quantity) || 0), 0);
+  const avgValue = totalReceipts > 0 ? totalValue / totalReceipts : 0;
+
+  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0', '#ffb347'];
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <BarChart3 className="mr-2 h-5 w-5" />
-            Andhra Pradesh AMC Analytics
-          </CardTitle>
-          <CardDescription>
-            Complete state-wide analytics and insights for agricultural market committee activities
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="w-full md:w-48">
-              <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by district" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Districts</SelectItem>
-                  {districts.map((district) => (
-                    <SelectItem key={district} value={district}>
-                      {district}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">State Analytics Dashboard</h2>
+        <p className="text-gray-600">Comprehensive overview of AMC receipts across Andhra Pradesh</p>
+      </div>
 
-            <div className="w-full md:w-48">
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="week">Last Week</SelectItem>
-                  <SelectItem value="month">Last Month</SelectItem>
-                  <SelectItem value="quarter">Last Quarter</SelectItem>
-                  <SelectItem value="year">Last Year</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Receipts</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold">{analytics.totalReceipts.toLocaleString()}</div>
-            )}
+            <div className="text-2xl font-bold">{totalReceipts.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">All time count</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Trade Value</CardTitle>
-            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <div className="text-2xl font-bold">₹{(analytics.totalValue / 10000000).toFixed(1)}Cr</div>
-            )}
+            <div className="text-2xl font-bold">₹{(totalValue / 100000).toFixed(1)}L</div>
+            <p className="text-xs text-muted-foreground">Cumulative trade value</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Fees Collected</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Quantity</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold">₹{(analytics.totalFees / 100000).toFixed(1)}L</div>
-            )}
+            <div className="text-2xl font-bold">{(totalQuantity / 1000).toFixed(1)}K</div>
+            <p className="text-xs text-muted-foreground">Metric tons traded</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Trade Value</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Avg Receipt Value</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold">₹{(analytics.avgValue / 1000).toFixed(0)}K</div>
-            )}
+            <div className="text-2xl font-bold">₹{avgValue.toFixed(0)}</div>
+            <p className="text-xs text-muted-foreground">Per transaction</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Detailed Analytics */}
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* District-wise Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle>District-wise Receipt Distribution</CardTitle>
+            <CardDescription>Number of receipts by district</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={districtChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="district" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Top Commodities */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Commodities</CardTitle>
+            <CardDescription>Most traded commodities by volume</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={commodityChartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ commodity, percent }) => `${commodity} ${(Number(percent) * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                >
+                  {commodityChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Trend */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Monthly Trading Trend</CardTitle>
+            <CardDescription>Receipt count and value trends over time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={monthlyChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip />
+                <Legend />
+                <Bar yAxisId="left" dataKey="count" fill="#8884d8" name="Receipt Count" />
+                <Line yAxisId="right" type="monotone" dataKey="value" stroke="#82ca9d" name="Total Value" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detailed Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Top Commodities by Value</CardTitle>
+            <CardTitle>District Performance</CardTitle>
+            <CardDescription>Detailed district-wise breakdown</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-6 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {analytics.topCommodities.map((item, index) => (
-                  <div key={item.commodity} className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{index + 1}. {item.commodity}</span>
-                    <span className="text-sm text-gray-600">₹{(item.value / 100000).toFixed(1)}L</span>
+            <div className="space-y-2">
+              {districtChartData.map((district: any, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span className="font-medium">{district.district}</span>
+                  <div className="text-right">
+                    <div className="font-bold">{district.count} receipts</div>
+                    <div className="text-sm text-gray-600">₹{(Number(district.value) / 100000).toFixed(1)}L</div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Most Active Committees</CardTitle>
+            <CardTitle>Commodity Analysis</CardTitle>
+            <CardDescription>Top commodities by trade value</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-6 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {analytics.committeeStats.map((item, index) => (
-                  <div key={item.committee} className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{index + 1}. {item.committee.split(' AMC')[0]}</span>
-                    <span className="text-sm text-gray-600">{item.count} transactions</span>
+            <div className="space-y-2">
+              {commodityChartData.slice(0, 8).map((commodity: any, index) => (
+                <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                  <span className="font-medium">{commodity.commodity}</span>
+                  <div className="text-right">
+                    <div className="font-bold">{commodity.count} receipts</div>
+                    <div className="text-sm text-gray-600">₹{(Number(commodity.value) / 100000).toFixed(1)}L</div>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>District-wise Trade Value</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {analytics.districtStats.map((item) => (
-                  <div key={item.district} className="p-4 border rounded-lg">
-                    <div className="text-sm font-medium text-gray-900">{item.district}</div>
-                    <div className="text-lg font-bold text-blue-600">₹{(item.value / 100000).toFixed(1)}L</div>
-                  </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
