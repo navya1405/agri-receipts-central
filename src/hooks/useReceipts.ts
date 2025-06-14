@@ -8,7 +8,10 @@ export const useReceipts = () => {
     queryFn: async () => {
       const { data: rawReceipts, error: rawError } = await supabase
         .from('receipts')
-        .select('*')
+        .select(`
+          *,
+          committee:committee_id(name, district)
+        `)
         .order('created_at', { ascending: false });
       if (rawError) throw new Error(rawError.message);
       return rawReceipts;

@@ -50,17 +50,23 @@ export const ReceiptDesktopTable = ({ receiptsLoading, filteredReceipts, user }:
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    <div className="font-medium truncate max-w-[120px]">{receipt.trader_name}</div>
+                    <div className="font-medium truncate max-w-[120px]">
+                      {receipt.trader_name || 'N/A'}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    <div className="font-medium truncate max-w-[120px]">{receipt.payee_name}</div>
+                    <div className="font-medium truncate max-w-[120px]">
+                      {receipt.payee_name || 'N/A'}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="text-sm">
-                    <div className="font-medium truncate max-w-[120px]">{receipt.committeeName}</div>
+                    <div className="font-medium truncate max-w-[120px]">
+                      {receipt.committeeName || receipt.committee?.name || 'Unknown'}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>{receipt.commodity}</TableCell>

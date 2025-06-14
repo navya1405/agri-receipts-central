@@ -63,11 +63,17 @@ export const ReceiptMobileView = ({ receiptsLoading, filteredReceipts, user }: R
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Trader:</span>
-                <span className="truncate ml-2">{receipt.trader_name}</span>
+                <span className="truncate ml-2">{receipt.trader_name || 'N/A'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Payee:</span>
-                <span className="truncate ml-2">{receipt.payee_name}</span>
+                <span className="truncate ml-2">{receipt.payee_name || 'N/A'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Committee:</span>
+                <span className="truncate ml-2">
+                  {receipt.committeeName || receipt.committee?.name || 'Unknown'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Commodity:</span>

@@ -47,7 +47,7 @@ export const useReceiptData = (user: any) => {
     if (!receipts) return [];
     return receipts.map(r => ({
       ...r,
-      committeeName: committeeMap.get(r.committee_id) || 'Loading...'
+      committeeName: committeeMap.get(r.committee_id) || 'Unknown Committee'
     }));
   }, [receipts, committeeMap]);
 
