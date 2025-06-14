@@ -27,6 +27,7 @@ const Analytics = ({ user }: { user: any }) => {
       if (error) throw error;
       setReceiptsData(receipts || []);
     } catch (error: any) {
+      console.error('Analytics fetch error:', error);
       toast({
         title: "Error fetching analytics data",
         description: error.message,
