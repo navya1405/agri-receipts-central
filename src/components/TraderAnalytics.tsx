@@ -9,8 +9,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { Search, TrendingUp, User, DollarSign, Package, Calendar } from 'lucide-react';
 
+// Define types for trader data
+interface Receipt {
+  id: string;
+  date: string;
+  seller_name: string;
+  commodity: string;
+  quantity: number;
+  value: number;
+  seller_committee?: {
+    name: string;
+    district: string;
+  };
+  buyer_committee?: {
+    name: string;
+    district: string;
+  };
+}
+
+interface TraderData {
+  name: string;
+  receipts: Receipt[];
+  totalValue: number;
+  totalQuantity: number;
+  commodities: string[];
+  avgValue: number;
+  lastTransaction: string | null;
+}
+
 const TraderAnalytics = ({ user }: { user: any }) => {
-  const [receiptsData, setReceiptsData] = useState<any[]>([]);
+  const [receiptsData, setReceiptsData] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTrader, setSelectedTrader] = useState<string | null>(null);
@@ -51,8 +79,8 @@ const TraderAnalytics = ({ user }: { user: any }) => {
     );
   }
 
-  // Process trader data
-  const traderData = receiptsData.reduce((acc: any, receipt) => {
+  // Process trader data with proper typing
+  const traderData: Record<string, TraderData> = receiptsData.reduce((acc, receipt) => {
     const traderName = receipt.seller_name || 'Unknown Trader';
     if (!acc[traderName]) {
       acc[traderName] = {
@@ -60,7 +88,7 @@ const TraderAnalytics = ({ user }: { user: any }) => {
         receipts: [],
         totalValue: 0,
         totalQuantity: 0,
-        commodities: new Set(),
+        commodities: [],
         avgValue: 0,
         lastTransaction: null
       };
@@ -69,37 +97,40 @@ const TraderAnalytics = ({ user }: { user: any }) => {
     acc[traderName].receipts.push(receipt);
     acc[traderName].totalValue += Number(receipt.value) || 0;
     acc[traderName].totalQuantity += Number(receipt.quantity) || 0;
-    acc[traderName].commodities.add(receipt.commodity);
+    
+    // Handle commodities as a Set temporarily, then convert to array
+    const commoditiesSet = new Set(acc[traderName].commodities);
+    commoditiesSet.add(receipt.commodity);
+    acc[traderName].commodities = Array.from(commoditiesSet);
     
     if (!acc[traderName].lastTransaction || new Date(receipt.date) > new Date(acc[traderName].lastTransaction)) {
       acc[traderName].lastTransaction = receipt.date;
     }
     
     return acc;
-  }, {});
+  }, {} as Record<string, TraderData>);
 
   // Calculate averages
   Object.keys(traderData).forEach(traderName => {
     const trader = traderData[traderName];
     trader.avgValue = trader.receipts.length > 0 ? trader.totalValue / trader.receipts.length : 0;
-    trader.commodities = Array.from(trader.commodities);
   });
 
-  const filteredTraders = Object.values(traderData).filter((trader: any) =>
+  const filteredTraders = Object.values(traderData).filter((trader: TraderData) =>
     trader.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const topTraders = Object.values(traderData)
-    .sort((a: any, b: any) => b.totalValue - a.totalValue)
+    .sort((a: TraderData, b: TraderData) => b.totalValue - a.totalValue)
     .slice(0, 10);
 
   const selectedTraderData = selectedTrader ? traderData[selectedTrader] : null;
 
   // Monthly data for selected trader
-  const getTraderMonthlyData = (trader: any) => {
+  const getTraderMonthlyData = (trader: TraderData) => {
     if (!trader) return [];
     
-    const monthlyData = trader.receipts.reduce((acc: any, receipt: any) => {
+    const monthlyData = trader.receipts.reduce((acc: any, receipt: Receipt) => {
       const month = new Date(receipt.date).toLocaleString('default', { month: 'short', year: 'numeric' });
       if (!acc[month]) {
         acc[month] = { month, count: 0, value: 0 };
@@ -191,7 +222,8 @@ const TraderAnalytics = ({ user }: { user: any }) => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Object.values(traderData).filter((trader: any) => {
+              {Object.values(traderData).filter((trader: TraderData) => {
+                if (!trader.lastTransaction) return false;
                 const lastTransaction = new Date(trader.lastTransaction);
                 const currentMonth = new Date();
                 return lastTransaction.getMonth() === currentMonth.getMonth() && 
@@ -231,7 +263,7 @@ const TraderAnalytics = ({ user }: { user: any }) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2 max-h-80 overflow-y-auto">
-              {filteredTraders.map((trader: any, index) => (
+              {filteredTraders.map((trader: TraderData, index) => (
                 <div 
                   key={index} 
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -320,7 +352,7 @@ const TraderAnalytics = ({ user }: { user: any }) => {
                     ))}
                   </div>
                   <div className="mt-4 text-sm text-gray-600">
-                    <p><strong>Last Transaction:</strong> {new Date(selectedTraderData.lastTransaction).toLocaleDateString()}</p>
+                    <p><strong>Last Transaction:</strong> {selectedTraderData.lastTransaction ? new Date(selectedTraderData.lastTransaction).toLocaleDateString() : 'N/A'}</p>
                     <p><strong>Total Quantity:</strong> {selectedTraderData.totalQuantity.toLocaleString()} units</p>
                   </div>
                 </div>
