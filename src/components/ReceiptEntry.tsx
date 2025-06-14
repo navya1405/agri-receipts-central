@@ -20,30 +20,82 @@ const fetchCommittees = async () => {
     return data;
 }
 
-// Mock commodities for now as they are not in the DB
+// Commodities in alphabetical order
 const commodities = [
-    'Rice', 'Wheat', 'Jowar', 'Bajra', 'Maize', 'Tur', 'Gram', 'Moong',
-    'Urad', 'Masur', 'Cotton', 'Sugarcane', 'Onion', 'Potato', 'Tomato'
+    'Bajra', 'Cotton', 'Gram', 'Jowar', 'Maize', 'Masur', 'Moong', 'Onion', 'Potato', 'Rice', 'Sugarcane', 'Tomato', 'Tur', 'Urad', 'Wheat'
+];
+
+// Nature of receipt options
+const natureOfReceipt = [
+    { value: 'lf', label: 'Licence Fees (LF)' },
+    { value: 'mf', label: 'Market Fees (MF)' },
+    { value: 'uc', label: 'User Charges (UC)' },
+    { value: 'others', label: 'Others' }
+];
+
+// Unit options
+const units = ['Quintals', 'Number', 'Bags'];
+
+// Collection locations
+const collectionLocations = ['Checkpost', 'Office'];
+
+// Supervisors
+const supervisors = ['Supervisor_1', 'Supervisor_2'];
+
+// Tuni locations for checkpost
+const tuniLocations = [
+    'Tuni Main Checkpost',
+    'Tuni Railway Station',
+    'Tuni Bus Stand',
+    'Tuni Market Yard',
+    'Tuni Industrial Area'
 ];
 
 const ReceiptEntry = ({ user }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [filteredCommodities, setFilteredCommodities] = useState(commodities);
+  const [commoditySearch, setCommoditySearch] = useState('');
+  
   const [formData, setFormData] = useState({
     seller_committee_id: '',
     buyer_committee_id: '',
     seller_name: '',
-    buyer_name: '',
+    seller_address: '',
+    payee_name: '',
+    payee_address: '',
     book_number: '',
     receipt_number: '',
     commodity: '',
     quantity: '',
+    unit: '',
     value: '',
-    fees_paid: ''
+    fees_paid: '',
+    nature_of_receipt: '',
+    vehicle_number: '',
+    invoice_number: '',
+    collection_location: '',
+    collected_by: '',
+    checkpost_location: '',
+    generated_by: '',
+    designation: ''
   });
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: committees, isLoading: committeesLoading } = useQuery({ queryKey: ['committees'], queryFn: fetchCommittees });
+
+  // Filter commodities based on search
+  useEffect(() => {
+    if (commoditySearch) {
+      const filtered = commodities.filter(commodity =>
+        commodity.toLowerCase().includes(commoditySearch.toLowerCase())
+      );
+      setFilteredCommodities(filtered);
+    } else {
+      setFilteredCommodities(commodities);
+    }
+  }, [commoditySearch]);
 
   const mutation = useMutation({
     mutationFn: async (newReceipt: any) => {
@@ -90,15 +142,27 @@ const ReceiptEntry = ({ user }) => {
       seller_committee_id: '',
       buyer_committee_id: '',
       seller_name: '',
-      buyer_name: '',
+      seller_address: '',
+      payee_name: '',
+      payee_address: '',
       book_number: '',
       receipt_number: '',
       commodity: '',
       quantity: '',
+      unit: '',
       value: '',
-      fees_paid: ''
+      fees_paid: '',
+      nature_of_receipt: '',
+      vehicle_number: '',
+      invoice_number: '',
+      collection_location: '',
+      collected_by: '',
+      checkpost_location: '',
+      generated_by: '',
+      designation: ''
     });
     setDate(new Date());
+    setCommoditySearch('');
   };
 
   return (
@@ -109,11 +173,12 @@ const ReceiptEntry = ({ user }) => {
           New Receipt Entry
         </CardTitle>
         <CardDescription>
-          Enter details for a new AMC trade receipt between seller and buyer
+          Enter details for a new AMC trade receipt
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Date and Receipt Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Receipt Date</Label>
@@ -147,76 +212,88 @@ const ReceiptEntry = ({ user }) => {
             </div>
           </div>
 
+          {/* Trader/Farmer and Payee Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Seller Section */}
+            {/* Trader/Farmer Section */}
             <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
-              <h3 className="font-medium text-blue-900">Seller Details</h3>
+              <h3 className="font-medium text-blue-900">Trader/Farmer Details</h3>
               <div className="space-y-2">
-                <Label htmlFor="sellerName">Seller Name</Label>
-                <Input id="sellerName" placeholder="Enter seller name" value={formData.seller_name} onChange={(e) => handleInputChange('seller_name', e.target.value)} required />
+                <Label htmlFor="sellerName">Trader/Farmer Name</Label>
+                <Input id="sellerName" placeholder="Enter trader/farmer name" value={formData.seller_name} onChange={(e) => handleInputChange('seller_name', e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sellerCommittee">Seller Committee</Label>
-                <Select value={formData.seller_committee_id} onValueChange={(value) => handleInputChange('seller_committee_id', value)} disabled={committeesLoading}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select seller committee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {committees?.map((committee) => (
-                      <SelectItem key={committee.id} value={committee.id}>
-                        {committee.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="sellerAddress">Trader/Farmer Address</Label>
+                <Input id="sellerAddress" placeholder="Enter trader/farmer address" value={formData.seller_address} onChange={(e) => handleInputChange('seller_address', e.target.value)} required />
               </div>
             </div>
 
-            {/* Buyer Section */}
+            {/* Payee Section */}
             <div className="space-y-4 p-4 border rounded-lg bg-green-50">
-              <h3 className="font-medium text-green-900">Buyer Details</h3>
+              <h3 className="font-medium text-green-900">Payee Details</h3>
               <div className="space-y-2">
-                <Label htmlFor="buyerName">Buyer Name</Label>
-                <Input id="buyerName" placeholder="Enter buyer name" value={formData.buyer_name} onChange={(e) => handleInputChange('buyer_name', e.target.value)} required />
+                <Label htmlFor="payeeName">Payee Name</Label>
+                <Input id="payeeName" placeholder="Enter payee name" value={formData.payee_name} onChange={(e) => handleInputChange('payee_name', e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="buyerCommittee">Buyer Committee</Label>
-                <Select value={formData.buyer_committee_id} onValueChange={(value) => handleInputChange('buyer_committee_id', value)} disabled={committeesLoading}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select buyer committee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {committees?.map((committee) => (
-                      <SelectItem key={committee.id} value={committee.id}>
-                        {committee.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="payeeAddress">Payee Address</Label>
+                <Input id="payeeAddress" placeholder="Enter payee address" value={formData.payee_address} onChange={(e) => handleInputChange('payee_address', e.target.value)} required />
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Commodity and Transaction Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="commodity">Commodity</Label>
-              <Select value={formData.commodity} onValueChange={(value) => handleInputChange('commodity', value)}>
+              <Label htmlFor="commoditySearch">Commodity</Label>
+              <div className="space-y-2">
+                <Input 
+                  id="commoditySearch" 
+                  placeholder="Search commodities..." 
+                  value={commoditySearch} 
+                  onChange={(e) => setCommoditySearch(e.target.value)} 
+                />
+                <Select value={formData.commodity} onValueChange={(value) => {
+                  handleInputChange('commodity', value);
+                  setCommoditySearch('');
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select commodity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCommodities.map((commodity) => (
+                      <SelectItem key={commodity} value={commodity}>
+                        {commodity}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="unit">Unit</Label>
+              <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select commodity" />
+                  <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
                 <SelectContent>
-                  {commodities.map((commodity) => (
-                    <SelectItem key={commodity} value={commodity}>
-                      {commodity}
+                  {units.map((unit) => (
+                    <SelectItem key={unit} value={unit}>
+                      {unit}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+            
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity (Quintals)</Label>
+              <Label htmlFor="quantity">Quantity</Label>
               <Input id="quantity" type="number" placeholder="Enter quantity" value={formData.quantity} onChange={(e) => handleInputChange('quantity', e.target.value)} required />
             </div>
+          </div>
+
+          {/* Financial and Receipt Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="value">Value (₹)</Label>
               <Input id="value" type="number" placeholder="Enter value" value={formData.value} onChange={(e) => handleInputChange('value', e.target.value)} required />
@@ -224,6 +301,101 @@ const ReceiptEntry = ({ user }) => {
             <div className="space-y-2">
               <Label htmlFor="feesPaid">Fees Paid (₹)</Label>
               <Input id="feesPaid" type="number" placeholder="Enter fees paid" value={formData.fees_paid} onChange={(e) => handleInputChange('fees_paid', e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="natureOfReceipt">Nature of Receipt</Label>
+              <Select value={formData.nature_of_receipt} onValueChange={(value) => handleInputChange('nature_of_receipt', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select nature" />
+                </SelectTrigger>
+                <SelectContent>
+                  {natureOfReceipt.map((nature) => (
+                    <SelectItem key={nature.value} value={nature.value}>
+                      {nature.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vehicleNumber">Vehicle Number</Label>
+              <Input id="vehicleNumber" placeholder="Enter vehicle number" value={formData.vehicle_number} onChange={(e) => handleInputChange('vehicle_number', e.target.value)} />
+            </div>
+          </div>
+
+          {/* Additional Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="invoiceNumber">Invoice Number</Label>
+              <Input id="invoiceNumber" placeholder="Enter invoice number" value={formData.invoice_number} onChange={(e) => handleInputChange('invoice_number', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="collectionLocation">Collection Location</Label>
+              <Select value={formData.collection_location} onValueChange={(value) => handleInputChange('collection_location', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select collection location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {collectionLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Collection Details - Conditional based on location */}
+          {formData.collection_location && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {formData.collection_location === 'Office' && (
+                <div className="space-y-2">
+                  <Label htmlFor="collectedBy">Collected By</Label>
+                  <Select value={formData.collected_by} onValueChange={(value) => handleInputChange('collected_by', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select supervisor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supervisors.map((supervisor) => (
+                        <SelectItem key={supervisor} value={supervisor}>
+                          {supervisor}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
+              {formData.collection_location === 'Checkpost' && (
+                <div className="space-y-2">
+                  <Label htmlFor="checkpostLocation">Checkpost Location</Label>
+                  <Select value={formData.checkpost_location} onValueChange={(value) => handleInputChange('checkpost_location', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select checkpost location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tuniLocations.map((location) => (
+                        <SelectItem key={location} value={location}>
+                          {location}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Generated By Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="generatedBy">Generated By</Label>
+              <Input id="generatedBy" placeholder="Enter name of person who generated" value={formData.generated_by} onChange={(e) => handleInputChange('generated_by', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="designation">Designation</Label>
+              <Input id="designation" placeholder="Enter designation" value={formData.designation} onChange={(e) => handleInputChange('designation', e.target.value)} />
             </div>
           </div>
 
