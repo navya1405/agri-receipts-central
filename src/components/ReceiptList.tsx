@@ -42,8 +42,7 @@ const ReceiptList = ({ user }) => {
       if (!receipts) return [];
       return receipts.map(r => ({
           ...r,
-          sellerCommittee: committeeMap.get(r.seller_committee_id) || 'Loading...',
-          buyerCommittee: committeeMap.get(r.buyer_committee_id) || 'Loading...'
+          committeeName: committeeMap.get(r.committee_id) || 'Loading...'
       }));
   }, [receipts, committeeMap]);
 
@@ -55,14 +54,13 @@ const ReceiptList = ({ user }) => {
   const filteredReceipts = allReceipts.filter(receipt => {
     const r = receipt as any;
     const matchesSearch = searchTerm === '' || 
-      (r.seller_name && r.seller_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (r.buyer_name && r.buyer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (r.trader_name && r.trader_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (r.payee_name && r.payee_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (r.receipt_number && r.receipt_number.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (r.book_number && r.book_number.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesCommittee = filterCommittee === 'all' || 
-      r.sellerCommittee === filterCommittee || 
-      r.buyerCommittee === filterCommittee;
+      r.committeeName === filterCommittee;
     
     const matchesCommodity = filterCommodity === 'all' || 
       r.commodity === filterCommodity;
@@ -72,9 +70,9 @@ const ReceiptList = ({ user }) => {
 
   const handleExport = () => {
     const csvContent = "data:text/csv;charset=utf-8," 
-      + "Date,Book Number,Receipt Number,Seller Name,Buyer Name,Seller Committee,Buyer Committee,Commodity,Quantity,Value,Fees Paid\n"
+      + "Date,Book Number,Receipt Number,Trader Name,Payee Name,Committee,Commodity,Quantity,Unit,Value,Fees Paid\n"
       + filteredReceipts.map((receipt: any) => 
-          `${receipt.date},${receipt.book_number},${receipt.receipt_number},${receipt.seller_name},${receipt.buyer_name},${receipt.sellerCommittee},${receipt.buyerCommittee},${receipt.commodity},${receipt.quantity},${receipt.value},${receipt.fees_paid}`
+          `${receipt.date},${receipt.book_number},${receipt.receipt_number},${receipt.trader_name},${receipt.payee_name},${receipt.committeeName},${receipt.commodity},${receipt.quantity},${receipt.unit},${receipt.value},${receipt.fees_paid}`
         ).join("\n");
 
     const encodedUri = encodeURI(csvContent);
@@ -223,12 +221,12 @@ const ReceiptList = ({ user }) => {
                         <span>{new Date(receipt.date).toLocaleDateString()}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Seller:</span>
-                        <span className="truncate ml-2">{receipt.seller_name}</span>
+                        <span className="text-gray-500">Trader:</span>
+                        <span className="truncate ml-2">{receipt.trader_name}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-500">Buyer:</span>
-                        <span className="truncate ml-2">{receipt.buyer_name}</span>
+                        <span className="text-gray-500">Payee:</span>
+                        <span className="truncate ml-2">{receipt.payee_name}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Commodity:</span>
@@ -236,7 +234,7 @@ const ReceiptList = ({ user }) => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Quantity:</span>
-                        <span>{receipt.quantity} Q</span>
+                        <span>{receipt.quantity} {receipt.unit}</span>
                       </div>
                       <div className="flex justify-between font-medium">
                         <span className="text-gray-500">Value:</span>
@@ -276,8 +274,9 @@ const ReceiptList = ({ user }) => {
                 <TableRow>
                   <TableHead className="min-w-[100px]">Date</TableHead>
                   <TableHead className="min-w-[120px]">Book/Receipt</TableHead>
-                  <TableHead className="min-w-[150px]">Seller</TableHead>
-                  <TableHead className="min-w-[150px]">Buyer</TableHead>
+                  <TableHead className="min-w-[150px]">Trader</TableHead>
+                  <TableHead className="min-w-[150px]">Payee</TableHead>
+                  <TableHead className="min-w-[120px]">Committee</TableHead>
                   <TableHead className="min-w-[100px]">Commodity</TableHead>
                   <TableHead className="min-w-[80px]">Quantity</TableHead>
                   <TableHead className="min-w-[100px]">Value</TableHead>
@@ -289,7 +288,7 @@ const ReceiptList = ({ user }) => {
                 {receiptsLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                            <TableCell colSpan={9}><Skeleton className="h-8 w-full" /></TableCell>
+                            <TableCell colSpan={10}><Skeleton className="h-8 w-full" /></TableCell>
                         </TableRow>
                     ))
                 ) : filteredReceipts.length > 0 ? (
@@ -306,18 +305,21 @@ const ReceiptList = ({ user }) => {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium truncate max-w-[120px]">{receipt.seller_name}</div>
-                          <div className="text-gray-500 truncate max-w-[120px]">{receipt.sellerCommittee}</div>
+                          <div className="font-medium truncate max-w-[120px]">{receipt.trader_name}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <div className="font-medium truncate max-w-[120px]">{receipt.buyer_name}</div>
-                          <div className="text-gray-500 truncate max-w-[120px]">{receipt.buyerCommittee}</div>
+                          <div className="font-medium truncate max-w-[120px]">{receipt.payee_name}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="font-medium truncate max-w-[120px]">{receipt.committeeName}</div>
                         </div>
                       </TableCell>
                       <TableCell>{receipt.commodity}</TableCell>
-                      <TableCell>{receipt.quantity} Q</TableCell>
+                      <TableCell>{receipt.quantity} {receipt.unit}</TableCell>
                       <TableCell>₹{Number(receipt.value).toLocaleString()}</TableCell>
                       <TableCell>
                         <Badge className="bg-green-100 text-green-800">
@@ -340,7 +342,7 @@ const ReceiptList = ({ user }) => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
+                    <TableCell colSpan={10} className="text-center py-8">
                       <div className="text-gray-500">
                         <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
                         <p>No receipts found</p>

@@ -42,23 +42,16 @@ const ReceiptSearch = ({ user }) => {
     }
 
     if (receipt) {
-        // Get committee names separately
-        const { data: sellerCommittee } = await supabase
+        // Get committee name separately
+        const { data: committee } = await supabase
             .from('committees')
             .select('name')
-            .eq('id', receipt.seller_committee_id)
-            .single();
-
-        const { data: buyerCommittee } = await supabase
-            .from('committees')
-            .select('name')
-            .eq('id', receipt.buyer_committee_id)
+            .eq('id', receipt.committee_id)
             .single();
 
         const result = {
             ...receipt,
-            sellerCommittee: sellerCommittee?.name || 'Unknown',
-            buyerCommittee: buyerCommittee?.name || 'Unknown',
+            committeeName: committee?.name || 'Unknown',
             status: 'Genuine'
         };
         setSearchResult(result);
@@ -127,14 +120,14 @@ const ReceiptSearch = ({ user }) => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div><Label className="text-sm font-medium text-gray-500">Receipt Date</Label><p className="text-sm font-semibold">{new Date(searchResult.date).toLocaleDateString()}</p></div>
-                  <div><Label className="text-sm font-medium text-gray-500">Seller Name</Label><p className="text-sm font-semibold">{searchResult.seller_name}</p></div>
-                  <div><Label className="text-sm font-medium text-gray-500">Buyer Name</Label><p className="text-sm font-semibold">{searchResult.buyer_name}</p></div>
+                  <div><Label className="text-sm font-medium text-gray-500">Trader Name</Label><p className="text-sm font-semibold">{searchResult.trader_name}</p></div>
+                  <div><Label className="text-sm font-medium text-gray-500">Payee Name</Label><p className="text-sm font-semibold">{searchResult.payee_name}</p></div>
                   <div><Label className="text-sm font-medium text-gray-500">Commodity</Label><p className="text-sm font-semibold">{searchResult.commodity}</p></div>
-                  <div><Label className="text-sm font-medium text-gray-500">Seller Committee</Label><p className="text-sm font-semibold">{searchResult.sellerCommittee}</p></div>
-                  <div><Label className="text-sm font-medium text-gray-500">Buyer Committee</Label><p className="text-sm font-semibold">{searchResult.buyerCommittee}</p></div>
-                  <div><Label className="text-sm font-medium text-gray-500">Quantity</Label><p className="text-sm font-semibold">{searchResult.quantity} Quintals</p></div>
+                  <div><Label className="text-sm font-medium text-gray-500">Committee</Label><p className="text-sm font-semibold">{searchResult.committeeName}</p></div>
+                  <div><Label className="text-sm font-medium text-gray-500">Quantity</Label><p className="text-sm font-semibold">{searchResult.quantity} {searchResult.unit}</p></div>
                   <div><Label className="text-sm font-medium text-gray-500">Value</Label><p className="text-sm font-semibold">₹{Number(searchResult.value).toLocaleString()}</p></div>
                   <div><Label className="text-sm font-medium text-gray-500">Fees Paid</Label><p className="text-sm font-semibold">₹{Number(searchResult.fees_paid).toLocaleString()}</p></div>
+                  <div><Label className="text-sm font-medium text-gray-500">Nature of Receipt</Label><p className="text-sm font-semibold">{searchResult.nature_of_receipt?.toUpperCase()}</p></div>
                 </div>
               </div>
             ) : (
