@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,31 +88,65 @@ const ReceiptEntry = ({ user }) => {
         if (error) throw error;
         setCommittees(committeesData || []);
 
+        console.log('All committees loaded:', committeesData);
+        console.log('User committee from props:', user.committee);
+
         // Set user's committee if they have one
         if (user.committee) {
           setUserCommittee(user.committee);
           
-          // Find the matching committee in the database
-          // Handle both short names (like "Tuni AMC") and full names
+          // Enhanced matching logic for committee lookup
+          const userCommitteeLower = user.committee.toLowerCase().trim();
+          
           const matchingCommittee = committeesData?.find(c => {
-            const userCommitteeLower = user.committee.toLowerCase();
             const dbNameLower = c.name.toLowerCase();
             const dbCodeLower = c.code.toLowerCase();
             
-            // Check if user committee matches the full name, code, or if it's a shortened version
-            return dbNameLower.includes(userCommitteeLower) || 
-                   dbCodeLower.includes(userCommitteeLower) ||
-                   userCommitteeLower.includes(dbNameLower.split(' ')[0]) || // Check first word
-                   (userCommitteeLower.includes('tuni') && dbNameLower.includes('tuni')) ||
-                   (userCommitteeLower.includes('kakinada') && dbNameLower.includes('kakinada'));
+            console.log(`Checking committee: "${c.name}" (code: "${c.code}") against user committee: "${user.committee}"`);
+            
+            // Exact matches
+            if (dbNameLower === userCommitteeLower || dbCodeLower === userCommitteeLower) {
+              console.log('Found exact match:', c.name);
+              return true;
+            }
+            
+            // Check if user committee is contained in database name
+            if (dbNameLower.includes(userCommitteeLower)) {
+              console.log('Found partial match (user in db):', c.name);
+              return true;
+            }
+            
+            // Check if database name is contained in user committee
+            if (userCommitteeLower.includes(dbNameLower)) {
+              console.log('Found partial match (db in user):', c.name);
+              return true;
+            }
+            
+            // Special handling for "Tuni" variations
+            const userContainsTuni = userCommitteeLower.includes('tuni');
+            const dbContainsTuni = dbNameLower.includes('tuni');
+            if (userContainsTuni && dbContainsTuni) {
+              console.log('Found Tuni match:', c.name);
+              return true;
+            }
+            
+            // Special handling for "AMC" variations
+            const userContainsAMC = userCommitteeLower.includes('amc');
+            const dbContainsAMC = dbNameLower.includes('agricultural market committee') || dbCodeLower.includes('amc');
+            if (userContainsAMC && dbContainsAMC) {
+              console.log('Found AMC match:', c.name);
+              return true;
+            }
+            
+            return false;
           });
           
           if (matchingCommittee) {
             setUserCommitteeData(matchingCommittee);
-            console.log('Found matching committee:', matchingCommittee);
+            console.log('Successfully matched committee:', matchingCommittee);
           } else {
             console.log('No matching committee found for:', user.committee);
-            console.log('Available committees:', committeesData);
+            console.log('Available committees:', committeesData?.map(c => `${c.name} (${c.code})`));
           }
         }
       } catch (error) {
