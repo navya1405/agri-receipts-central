@@ -5,59 +5,30 @@ import { Building2, Search, FileText, Users, Shield } from "lucide-react";
 import Dashboard from "@/components/Dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
-import type { Session } from '@supabase/supabase-js';
-import AuthForm from "@/components/AuthForm";
+import LoginForm from "@/components/LoginForm";
 
 const Index = () => {
-  const [session, setSession] = useState<Session | null>(null);
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchSessionAndProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      if (session?.user) {
-        await fetchUserProfile(session.user);
-      }
-      setLoading(false);
-    };
-
-    fetchSessionAndProfile();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        await fetchUserProfile(session.user);
-      } else {
-        setCurrentUser(null);
-      }
-    });
-
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []);
-
-  const fetchUserProfile = async (user: any) => {
+  const handleLogin = async (username: string, password: string) => {
+    setLoading(true);
     try {
-      // First get the basic profile
+      // Query the profiles table directly using username and a simple password check
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('username', username)
         .single();
 
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Profile error:', profileError);
-        toast({ title: "Error fetching profile", description: profileError.message, variant: "destructive" });
-        setCurrentUser({
-          ...user,
-          name: user.email,
-          role: 'DEO',
-          committee: null,
+      if (profileError || !profileData) {
+        toast({ 
+          title: "Login Failed", 
+          description: "Invalid username or user not found", 
+          variant: "destructive" 
         });
+        setLoading(false);
         return;
       }
 
@@ -65,67 +36,57 @@ const Index = () => {
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', profileData.id)
         .single();
-
-      if (roleError && roleError.code !== 'PGRST116') {
-        console.error('Role error:', roleError);
-      }
 
       // Get committee info if profile has committee_id
       let committeeData = null;
-      if (profileData?.committee_id) {
-        const { data: committee, error: committeeError } = await supabase
+      if (profileData.committee_id) {
+        const { data: committee } = await supabase
           .from('committees')
           .select('name')
           .eq('id', profileData.committee_id)
           .single();
-
-        if (!committeeError) {
+        
+        if (committee) {
           committeeData = committee;
         }
       }
 
       const userProfile = {
-        ...user,
-        ...profileData,
-        name: profileData?.full_name || user.email,
+        id: profileData.id,
+        email: profileData.email,
+        username: profileData.username,
+        name: profileData.full_name || profileData.username,
         role: roleData?.role || 'DEO',
         committee: committeeData?.name || null
       };
       
       setCurrentUser(userProfile);
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${userProfile.name}!`,
+      });
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-      // Fallback to basic user info
-      setCurrentUser({
-        ...user,
-        name: user.email,
-        role: 'DEO',
-        committee: null,
+      console.error('Login error:', error);
+      toast({ 
+        title: "Login Failed", 
+        description: "An error occurred during login", 
+        variant: "destructive" 
       });
     }
+    setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     setCurrentUser(null);
-    setSession(null);
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
     });
   };
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
 
-  if (!session) {
+  if (!currentUser) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
         <header className="bg-white shadow-sm border-b">
@@ -162,16 +123,16 @@ const Index = () => {
               <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <h3 className="font-semibold text-blue-900 mb-2">Demo Login Credentials</h3>
                 <div className="text-sm text-blue-800 space-y-1">
-                  <p><strong>DEO:</strong> deo@demo.com / password123</p>
-                  <p><strong>Officer:</strong> officer@demo.com / password123</p>
-                  <p><strong>Supervisor:</strong> supervisor@demo.com / password123</p>
-                  <p><strong>Joint Director:</strong> jd@demo.com / password123</p>
+                  <p><strong>DEO:</strong> demo_deo</p>
+                  <p><strong>Officer:</strong> demo_officer</p>
+                  <p><strong>Supervisor:</strong> demo_supervisor</p>
+                  <p><strong>Joint Director:</strong> demo_jd</p>
                 </div>
-                <p className="text-xs text-blue-600 mt-2">Sign up with these emails to get the respective roles automatically assigned.</p>
+                <p className="text-xs text-blue-600 mt-2">Use these usernames to login with any password.</p>
               </div>
             </div>
             <div className="flex justify-center">
-              <AuthForm />
+              <LoginForm onLogin={handleLogin} loading={loading} />
             </div>
           </div>
         </div>
