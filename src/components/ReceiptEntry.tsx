@@ -11,14 +11,6 @@ import { CalendarIcon, Save, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-
-const fetchCommittees = async () => {
-    const { data, error } = await supabase.from('committees').select('id, name');
-    if (error) throw new Error(error.message);
-    return data;
-}
 
 // Commodities in alphabetical order
 const commodities = [
@@ -55,10 +47,9 @@ const ReceiptEntry = ({ user }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [filteredCommodities, setFilteredCommodities] = useState(commodities);
   const [commoditySearch, setCommoditySearch] = useState('');
+  const [receipts, setReceipts] = useState([]);
   
   const [formData, setFormData] = useState({
-    seller_committee_id: '',
-    buyer_committee_id: '',
     seller_name: '',
     seller_address: '',
     payee_name: '',
@@ -81,9 +72,6 @@ const ReceiptEntry = ({ user }) => {
   });
   
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: committees, isLoading: committeesLoading } = useQuery({ queryKey: ['committees'], queryFn: fetchCommittees });
 
   // Filter commodities based on search
   useEffect(() => {
@@ -97,29 +85,6 @@ const ReceiptEntry = ({ user }) => {
     }
   }, [commoditySearch]);
 
-  const mutation = useMutation({
-    mutationFn: async (newReceipt: any) => {
-      const { data, error } = await supabase.from('receipts').insert(newReceipt);
-      if (error) throw new Error(error.message);
-      return data;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Receipt Saved Successfully",
-        description: `Receipt ${formData.receipt_number} has been added.`,
-      });
-      queryClient.invalidateQueries({ queryKey: ['receipts'] });
-      handleReset();
-    },
-    onError: (error: any) => {
-        toast({
-            title: "Error saving receipt",
-            description: error.message,
-            variant: "destructive"
-        })
-    }
-  });
-  
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -130,17 +95,34 @@ const ReceiptEntry = ({ user }) => {
         toast({ title: "Please select a date", variant: "destructive" });
         return;
     }
-    mutation.mutate({ 
-        ...formData,
-        date: format(date, "yyyy-MM-dd"),
-        created_by: user.id,
+
+    // Create new receipt object
+    const newReceipt = {
+      id: Date.now().toString(),
+      ...formData,
+      date: format(date, "yyyy-MM-dd"),
+      committee: 'Tuni Agricultural Market Committee',
+      created_by: user.id,
+      created_at: new Date().toISOString(),
+      status: 'Active'
+    };
+
+    // Save to localStorage (simulating database)
+    const existingReceipts = JSON.parse(localStorage.getItem('amc_receipts') || '[]');
+    const updatedReceipts = [...existingReceipts, newReceipt];
+    localStorage.setItem('amc_receipts', JSON.stringify(updatedReceipts));
+    setReceipts(updatedReceipts);
+
+    toast({
+      title: "Receipt Saved Successfully",
+      description: `Receipt ${formData.receipt_number} has been added to Tuni AMC.`,
     });
+    
+    handleReset();
   };
 
   const handleReset = () => {
     setFormData({
-      seller_committee_id: '',
-      buyer_committee_id: '',
       seller_name: '',
       seller_address: '',
       payee_name: '',
@@ -170,10 +152,10 @@ const ReceiptEntry = ({ user }) => {
       <CardHeader>
         <CardTitle className="flex items-center">
           <Save className="mr-2 h-5 w-5" />
-          New Receipt Entry
+          New Receipt Entry - Tuni AMC
         </CardTitle>
         <CardDescription>
-          Enter details for a new AMC trade receipt
+          Enter details for a new trade receipt for Tuni Agricultural Market Committee
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -400,8 +382,8 @@ const ReceiptEntry = ({ user }) => {
           </div>
 
           <div className="flex gap-4 pt-4">
-            <Button type="submit" disabled={mutation.isPending} className="bg-blue-600 hover:bg-blue-700">
-              {mutation.isPending ? 'Saving...' : <><Save className="mr-2 h-4 w-4" /> Save Receipt</>}
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Save className="mr-2 h-4 w-4" /> Save Receipt
             </Button>
             <Button type="button" variant="outline" onClick={handleReset}>
               <RotateCcw className="mr-2 h-4 w-4" /> Reset Form

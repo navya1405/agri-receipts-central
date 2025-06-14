@@ -35,6 +35,7 @@ const Dashboard = ({ user, onLogout }) => {
       { id: 'overview', label: 'Overview', icon: BarChart3 }
     ];
 
+    // Restrict access based on role for single committee system
     switch (user.role) {
       case 'DEO':
         return [
@@ -45,21 +46,21 @@ const Dashboard = ({ user, onLogout }) => {
       case 'Officer':
         return [
           ...commonItems,
+          { id: 'entry', label: 'New Receipt', icon: Plus },
+          { id: 'list', label: 'Committee Receipts', icon: FileText },
           { id: 'search', label: 'Verify Receipt', icon: Search }
         ];
       case 'Supervisor':
         return [
           ...commonItems,
-          { id: 'list', label: 'Committee Receipts', icon: FileText },
-          { id: 'export', label: 'Export Data', icon: Download }
+          { id: 'analytics', label: 'Committee Analytics', icon: TrendingUp },
+          { id: 'list', label: 'Committee Receipts', icon: FileText }
         ];
       case 'JD':
         return [
           ...commonItems,
-          { id: 'analytics', label: 'State Analytics', icon: TrendingUp },
-          { id: 'list', label: 'All Receipts', icon: FileText },
-          { id: 'users', label: 'Manage Users', icon: Users },
-          { id: 'export', label: 'Export Data', icon: Download }
+          { id: 'analytics', label: 'Committee Analytics', icon: TrendingUp },
+          { id: 'list', label: 'All Receipts', icon: FileText }
         ];
       default:
         return commonItems;
@@ -67,15 +68,39 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   const renderContent = () => {
+    // Role-based access control
+    const allowedTabs = getMenuItems().map(item => item.id);
+    
+    if (!allowedTabs.includes(activeTab)) {
+      return (
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center text-red-600">
+              Access denied. You don't have permission to view this section.
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
     switch (activeTab) {
       case 'entry':
-        return <ReceiptEntry user={user} />;
+        if (user.role === 'DEO' || user.role === 'Officer') {
+          return <ReceiptEntry user={user} />;
+        }
+        break;
       case 'search':
-        return <ReceiptSearch user={user} />;
+        if (user.role === 'Officer') {
+          return <ReceiptSearch user={user} />;
+        }
+        break;
       case 'list':
         return <ReceiptList user={user} />;
       case 'analytics':
-        return <Analytics user={user} />;
+        if (user.role === 'Supervisor' || user.role === 'JD') {
+          return <Analytics user={user} />;
+        }
+        break;
       case 'overview':
       default:
         return (
@@ -87,8 +112,8 @@ const Dashboard = ({ user, onLogout }) => {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">1,234</div>
-                  <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                  <div className="text-2xl font-bold">89</div>
+                  <p className="text-xs text-muted-foreground">Tuni AMC Committee</p>
                 </CardContent>
               </Card>
 
@@ -98,8 +123,8 @@ const Dashboard = ({ user, onLogout }) => {
                   <Plus className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">89</div>
-                  <p className="text-xs text-muted-foreground">+15.2% from last month</p>
+                  <div className="text-2xl font-bold">12</div>
+                  <p className="text-xs text-muted-foreground">+8 from last month</p>
                 </CardContent>
               </Card>
 
@@ -109,8 +134,8 @@ const Dashboard = ({ user, onLogout }) => {
                   <Search className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">45</div>
-                  <p className="text-xs text-muted-foreground">+8.3% from yesterday</p>
+                  <div className="text-2xl font-bold">5</div>
+                  <p className="text-xs text-muted-foreground">All verified</p>
                 </CardContent>
               </Card>
 
@@ -120,27 +145,27 @@ const Dashboard = ({ user, onLogout }) => {
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₹12.4L</div>
-                  <p className="text-xs text-muted-foreground">+12.5% from last month</p>
+                  <div className="text-2xl font-bold">₹2.4L</div>
+                  <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
             </div>
 
             <Card>
               <CardHeader>
-                <CardTitle>Welcome to AMC Receipt System</CardTitle>
+                <CardTitle>Tuni Agricultural Market Committee</CardTitle>
                 <CardDescription>
-                  Digital management of agricultural market committee trade receipts across Andhra Pradesh
+                  Digital receipt management system for Tuni AMC
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-4">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm">System is operational and running smoothly</span>
+                    <span className="text-sm">System is operational for Tuni AMC</span>
                   </div>
                   
-                  {user.role === 'DEO' && (
+                  {(user.role === 'DEO' || user.role === 'Officer') && (
                     <div className="p-4 bg-blue-50 rounded-lg">
                       <h4 className="font-medium text-blue-900 mb-2">Quick Actions</h4>
                       <div className="space-y-2">
@@ -160,7 +185,7 @@ const Dashboard = ({ user, onLogout }) => {
                           className="w-full justify-start"
                         >
                           <FileText className="mr-2 h-4 w-4" />
-                          View My Receipts
+                          View Receipts
                         </Button>
                       </div>
                     </div>
@@ -181,9 +206,9 @@ const Dashboard = ({ user, onLogout }) => {
                     </div>
                   )}
 
-                  {user.role === 'JD' && (
-                    <div className="p-4 bg-red-50 rounded-lg">
-                      <h4 className="font-medium text-red-900 mb-2">State Analytics</h4>
+                  {(user.role === 'Supervisor' || user.role === 'JD') && (
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <h4 className="font-medium text-purple-900 mb-2">Analytics & Reports</h4>
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -191,22 +216,7 @@ const Dashboard = ({ user, onLogout }) => {
                         className="w-full justify-start"
                       >
                         <TrendingUp className="mr-2 h-4 w-4" />
-                        View State Analytics
-                      </Button>
-                    </div>
-                  )}
-
-                  {user.role === 'Supervisor' && (
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <h4 className="font-medium text-purple-900 mb-2">Committee Management</h4>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setActiveTab('list')}
-                        className="w-full justify-start"
-                      >
-                        <FileText className="mr-2 h-4 w-4" />
-                        View Committee Receipts
+                        View Analytics
                       </Button>
                     </div>
                   )}
@@ -227,8 +237,8 @@ const Dashboard = ({ user, onLogout }) => {
             <div className="flex items-center space-x-3">
               <Building2 className="h-8 w-8 text-blue-600" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">AMC Receipt System</h1>
-                <p className="text-sm text-gray-600">Andhra Pradesh Agricultural Market Committee</p>
+                <h1 className="text-xl font-bold text-gray-900">Tuni AMC System</h1>
+                <p className="text-sm text-gray-600">Agricultural Market Committee Receipt Management</p>
               </div>
             </div>
             
@@ -237,9 +247,7 @@ const Dashboard = ({ user, onLogout }) => {
                 <p className="text-sm font-medium text-gray-900">{user.name || user.email}</p>
                 <div className="flex items-center space-x-2">
                   <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
-                  {user.committee && (
-                    <span className="text-xs text-gray-500">{user.committee}</span>
-                  )}
+                  <span className="text-xs text-gray-500">Tuni AMC</span>
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={onLogout}>
