@@ -118,7 +118,17 @@ const ReceiptEntry = ({ user }) => {
   }, [commoditySearch]);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Clear dependent fields when collection_location changes
+      if (field === 'collection_location') {
+        newData.collected_by = '';
+        newData.checkpost_location = '';
+      }
+      
+      return newData;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,6 +140,17 @@ const ReceiptEntry = ({ user }) => {
 
     if (!userCommittee) {
         toast({ title: "No committee assigned", description: "Please contact administrator to assign a committee.", variant: "destructive" });
+        return;
+    }
+
+    // Validate conditional fields
+    if (formData.collection_location === 'office' && !formData.collected_by) {
+        toast({ title: "Please select who collected the receipt", variant: "destructive" });
+        return;
+    }
+
+    if (formData.collection_location === 'checkpost' && !formData.checkpost_location) {
+        toast({ title: "Please select checkpost location", variant: "destructive" });
         return;
     }
 
@@ -160,8 +181,8 @@ const ReceiptEntry = ({ user }) => {
         vehicle_number: formData.vehicle_number,
         invoice_number: formData.invoice_number,
         collection_location: formData.collection_location,
-        collected_by: formData.collected_by,
-        checkpost_location: formData.checkpost_location,
+        collected_by: formData.collection_location === 'office' ? formData.collected_by : null,
+        checkpost_location: formData.collection_location === 'checkpost' ? formData.checkpost_location : null,
         generated_by: formData.generated_by,
         designation: formData.designation,
         committee_id: userCommitteeData.id,
@@ -406,7 +427,7 @@ const ReceiptEntry = ({ user }) => {
               </Select>
             </div>
 
-            {formData.collection_location && (
+            {formData.collection_location === 'office' && (
               <div className="space-y-2">
                 <Label htmlFor="collectedBy">Collected By</Label>
                 <Select value={formData.collected_by} onValueChange={(value) => handleInputChange('collected_by', value)}>
