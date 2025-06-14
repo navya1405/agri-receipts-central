@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Building2, Search, FileText, Users, Shield } from "lucide-react";
 import Dashboard from "@/components/Dashboard";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
 import LoginForm from "@/components/LoginForm";
 
 const Index = () => {
@@ -14,93 +13,63 @@ const Index = () => {
 
   const handleLogin = async (username: string, password: string) => {
     setLoading(true);
-    console.log('Login attempt for username:', username);
+    console.log('Demo login attempt for username:', username);
     
-    try {
-      // Query the profiles table directly using username
-      console.log('Querying profiles table for username:', username);
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('username', username)
-        .maybeSingle();
-
-      console.log('Profile query result:', { profileData, profileError });
-
-      if (profileError) {
-        console.log('Database error:', profileError);
-        toast({ 
-          title: "Login Failed", 
-          description: "Database error occurred", 
-          variant: "destructive" 
-        });
-        setLoading(false);
-        return;
+    // Simple demo user mapping
+    const demoUsers = {
+      'demo_deo': {
+        id: '1',
+        email: 'demo_deo@amc.gov.in',
+        username: 'demo_deo',
+        name: 'Demo DEO User',
+        role: 'DEO',
+        committee: 'Tuni Agricultural Market Committee'
+      },
+      'demo_officer': {
+        id: '2',
+        email: 'demo_officer@amc.gov.in',
+        username: 'demo_officer',
+        name: 'Demo Officer User',
+        role: 'Officer',
+        committee: 'Tuni Agricultural Market Committee'
+      },
+      'demo_supervisor': {
+        id: '3',
+        email: 'demo_supervisor@amc.gov.in',
+        username: 'demo_supervisor',
+        name: 'Demo Supervisor User',
+        role: 'Supervisor',
+        committee: 'Tuni Agricultural Market Committee'
+      },
+      'demo_jd': {
+        id: '4',
+        email: 'demo_jd@amc.gov.in',
+        username: 'demo_jd',
+        name: 'Demo Joint Director',
+        role: 'JD',
+        committee: null
       }
+    };
 
-      if (!profileData) {
-        console.log('Profile not found for username:', username);
-        toast({ 
-          title: "Login Failed", 
-          description: "Invalid username or user not found", 
-          variant: "destructive" 
-        });
-        setLoading(false);
-        return;
-      }
-
-      console.log('Profile found:', profileData);
-
-      // Get user role
-      console.log('Querying user roles for user_id:', profileData.id);
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', profileData.id)
-        .maybeSingle();
-
-      console.log('Role query result:', { roleData, roleError });
-
-      // Get committee info if profile has committee_id
-      let committeeData = null;
-      if (profileData.committee_id) {
-        console.log('Querying committee for committee_id:', profileData.committee_id);
-        const { data: committee } = await supabase
-          .from('committees')
-          .select('name')
-          .eq('id', profileData.committee_id)
-          .maybeSingle();
-        
-        if (committee) {
-          committeeData = committee;
-        }
-        console.log('Committee query result:', committee);
-      }
-
-      const userProfile = {
-        id: profileData.id,
-        email: profileData.email,
-        username: profileData.username,
-        name: profileData.full_name || profileData.username,
-        role: roleData?.role || 'DEO',
-        committee: committeeData?.name || null
-      };
-      
-      console.log('Final user profile:', userProfile);
-      
-      setCurrentUser(userProfile);
+    // Check if username exists in demo users
+    const user = demoUsers[username.toLowerCase()];
+    
+    if (user) {
+      console.log('Demo user found:', user);
+      setCurrentUser(user);
       toast({
         title: "Login Successful",
-        description: `Welcome back, ${userProfile.name}!`,
+        description: `Welcome back, ${user.name}!`,
       });
-    } catch (error) {
-      console.error('Login error:', error);
+    } else {
+      console.log('Demo user not found for username:', username);
       toast({ 
         title: "Login Failed", 
-        description: "An error occurred during login", 
+        description: "Invalid username. Please use demo_deo, demo_officer, demo_supervisor, or demo_jd", 
         variant: "destructive" 
       });
     }
+    
     setLoading(false);
   };
 
