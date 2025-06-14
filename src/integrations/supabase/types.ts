@@ -91,12 +91,12 @@ export type Database = {
           id: string
           invoice_number: string | null
           nature_of_receipt: string
+          payee_address: string
           payee_name: string
           quantity: number
           receipt_number: string
           status: string | null
           trader_address: string
-          trader_license: string | null
           trader_name: string
           unit: string
           updated_at: string
@@ -119,12 +119,12 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           nature_of_receipt: string
+          payee_address: string
           payee_name: string
           quantity: number
           receipt_number: string
           status?: string | null
           trader_address: string
-          trader_license?: string | null
           trader_name: string
           unit: string
           updated_at?: string
@@ -147,12 +147,12 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           nature_of_receipt?: string
+          payee_address?: string
           payee_name?: string
           quantity?: number
           receipt_number?: string
           status?: string | null
           trader_address?: string
-          trader_license?: string | null
           trader_name?: string
           unit?: string
           updated_at?: string

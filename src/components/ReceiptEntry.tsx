@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -170,6 +171,7 @@ const ReceiptEntry = ({ user }) => {
         trader_name: formData.trader_name,
         trader_address: formData.trader_address,
         payee_name: formData.payee_name,
+        payee_address: formData.payee_address,
         commodity: formData.commodity,
         quantity: parseFloat(formData.quantity),
         unit: formData.unit,
