@@ -21,6 +21,29 @@ const commodities = [
 // Unit options
 const units = ['Quintals', 'Number', 'Bags'];
 
+// Nature of receipt options
+const natureOfReceipt = [
+    { value: 'lf', label: 'Licence Fees (LF)' },
+    { value: 'mf', label: 'Market Fees (MF)' },
+    { value: 'uc', label: 'User Charges (UC)' },
+    { value: 'others', label: 'Others' }
+];
+
+// Collection locations
+const collectionLocations = ['checkpost', 'office'];
+
+// Supervisors
+const supervisors = ['supervisor_1', 'supervisor_2'];
+
+// Tuni locations for checkpost
+const tuniLocations = [
+    'Tuni Main Checkpost',
+    'Tuni Railway Station',
+    'Tuni Bus Stand',
+    'Tuni Market Yard',
+    'Tuni Industrial Area'
+];
+
 const ReceiptEntry = ({ user }) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [filteredCommodities, setFilteredCommodities] = useState(commodities);
@@ -30,16 +53,25 @@ const ReceiptEntry = ({ user }) => {
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
-    seller_name: '',
-    buyer_name: '',
     book_number: '',
     receipt_number: '',
+    trader_name: '',
+    trader_address: '',
+    trader_license: '',
+    payee_name: '',
     commodity: '',
     quantity: '',
     unit: '',
     value: '',
+    nature_of_receipt: '',
     fees_paid: '',
-    trader_license: ''
+    vehicle_number: '',
+    invoice_number: '',
+    collection_location: '',
+    collected_by: '',
+    checkpost_location: '',
+    generated_by: '',
+    designation: ''
   });
   
   const { toast } = useToast();
@@ -115,16 +147,25 @@ const ReceiptEntry = ({ user }) => {
         book_number: formData.book_number,
         receipt_number: formData.receipt_number,
         date: format(date, "yyyy-MM-dd"),
-        seller_name: formData.seller_name,
-        buyer_name: formData.buyer_name,
+        trader_name: formData.trader_name,
+        trader_address: formData.trader_address,
+        trader_license: formData.trader_license,
+        payee_name: formData.payee_name,
         commodity: formData.commodity,
         quantity: parseFloat(formData.quantity),
+        unit: formData.unit,
         value: parseFloat(formData.value),
+        nature_of_receipt: formData.nature_of_receipt,
         fees_paid: parseFloat(formData.fees_paid),
-        seller_committee_id: userCommitteeData.id,
-        buyer_committee_id: userCommitteeData.id, // Same committee for now
+        vehicle_number: formData.vehicle_number,
+        invoice_number: formData.invoice_number,
+        collection_location: formData.collection_location,
+        collected_by: formData.collected_by,
+        checkpost_location: formData.checkpost_location,
+        generated_by: formData.generated_by,
+        designation: formData.designation,
+        committee_id: userCommitteeData.id,
         created_by: user.id,
-        trader_license: formData.trader_license,
         status: 'Active'
       };
 
@@ -157,16 +198,25 @@ const ReceiptEntry = ({ user }) => {
 
   const handleReset = () => {
     setFormData({
-      seller_name: '',
-      buyer_name: '',
       book_number: '',
       receipt_number: '',
+      trader_name: '',
+      trader_address: '',
+      trader_license: '',
+      payee_name: '',
       commodity: '',
       quantity: '',
       unit: '',
       value: '',
+      nature_of_receipt: '',
       fees_paid: '',
-      trader_license: ''
+      vehicle_number: '',
+      invoice_number: '',
+      collection_location: '',
+      collected_by: '',
+      checkpost_location: '',
+      generated_by: '',
+      designation: ''
     });
     setDate(new Date());
     setCommoditySearch('');
@@ -219,14 +269,18 @@ const ReceiptEntry = ({ user }) => {
             </div>
           </div>
 
-          {/* Trader/Farmer and Buyer Information */}
+          {/* Trader/Farmer and Payee Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Seller Section */}
+            {/* Trader/Farmer Section */}
             <div className="space-y-4 p-4 border rounded-lg bg-blue-50">
-              <h3 className="font-medium text-blue-900">Seller Details</h3>
+              <h3 className="font-medium text-blue-900">Trader/Farmer Details</h3>
               <div className="space-y-2">
-                <Label htmlFor="sellerName">Seller Name</Label>
-                <Input id="sellerName" placeholder="Enter seller name" value={formData.seller_name} onChange={(e) => handleInputChange('seller_name', e.target.value)} required />
+                <Label htmlFor="traderName">Trader/Farmer Name</Label>
+                <Input id="traderName" placeholder="Enter trader/farmer name" value={formData.trader_name} onChange={(e) => handleInputChange('trader_name', e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="traderAddress">Trader Address</Label>
+                <Input id="traderAddress" placeholder="Enter trader address" value={formData.trader_address} onChange={(e) => handleInputChange('trader_address', e.target.value)} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="traderLicense">Trader License</Label>
@@ -234,18 +288,18 @@ const ReceiptEntry = ({ user }) => {
               </div>
             </div>
 
-            {/* Buyer Section */}
+            {/* Payee Section */}
             <div className="space-y-4 p-4 border rounded-lg bg-green-50">
-              <h3 className="font-medium text-green-900">Buyer Details</h3>
+              <h3 className="font-medium text-green-900">Payee Details</h3>
               <div className="space-y-2">
-                <Label htmlFor="buyerName">Buyer Name</Label>
-                <Input id="buyerName" placeholder="Enter buyer name" value={formData.buyer_name} onChange={(e) => handleInputChange('buyer_name', e.target.value)} required />
+                <Label htmlFor="payeeName">Payee Name</Label>
+                <Input id="payeeName" placeholder="Enter payee name" value={formData.payee_name} onChange={(e) => handleInputChange('payee_name', e.target.value)} required />
               </div>
             </div>
           </div>
 
           {/* Commodity and Transaction Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="commoditySearch">Commodity</Label>
               <div className="space-y-2">
@@ -293,10 +347,26 @@ const ReceiptEntry = ({ user }) => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="natureOfReceipt">Nature of Receipt</Label>
+              <Select value={formData.nature_of_receipt} onValueChange={(value) => handleInputChange('nature_of_receipt', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select nature" />
+                </SelectTrigger>
+                <SelectContent>
+                  {natureOfReceipt.map((nature) => (
+                    <SelectItem key={nature.value} value={nature.value}>
+                      {nature.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Financial Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Financial and Transport Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="value">Value (₹)</Label>
               <Input id="value" type="number" placeholder="Enter value" value={formData.value} onChange={(e) => handleInputChange('value', e.target.value)} required />
@@ -304,6 +374,84 @@ const ReceiptEntry = ({ user }) => {
             <div className="space-y-2">
               <Label htmlFor="feesPaid">Fees Paid (₹)</Label>
               <Input id="feesPaid" type="number" placeholder="Enter fees paid" value={formData.fees_paid} onChange={(e) => handleInputChange('fees_paid', e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vehicleNumber">Vehicle Number</Label>
+              <Input id="vehicleNumber" placeholder="Enter vehicle number" value={formData.vehicle_number} onChange={(e) => handleInputChange('vehicle_number', e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="invoiceNumber">Invoice Number</Label>
+              <Input id="invoiceNumber" placeholder="Enter invoice number" value={formData.invoice_number} onChange={(e) => handleInputChange('invoice_number', e.target.value)} />
+            </div>
+          </div>
+
+          {/* Collection Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="collectionLocation">Collection Location</Label>
+              <Select value={formData.collection_location} onValueChange={(value) => handleInputChange('collection_location', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {collectionLocations.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location.charAt(0).toUpperCase() + location.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.collection_location && (
+              <div className="space-y-2">
+                <Label htmlFor="collectedBy">Collected By</Label>
+                <Select value={formData.collected_by} onValueChange={(value) => handleInputChange('collected_by', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select supervisor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {supervisors.map((supervisor) => (
+                      <SelectItem key={supervisor} value={supervisor}>
+                        {supervisor.replace('_', ' ').toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {formData.collection_location === 'checkpost' && (
+              <div className="space-y-2">
+                <Label htmlFor="checkpostLocation">Checkpost Location</Label>
+                <Select value={formData.checkpost_location} onValueChange={(value) => handleInputChange('checkpost_location', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select checkpost" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tuniLocations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        {location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Administrative Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="generatedBy">Generated By</Label>
+              <Input id="generatedBy" placeholder="Enter who generated this receipt" value={formData.generated_by} onChange={(e) => handleInputChange('generated_by', e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="designation">Designation</Label>
+              <Input id="designation" placeholder="Enter designation" value={formData.designation} onChange={(e) => handleInputChange('designation', e.target.value)} required />
             </div>
           </div>
 

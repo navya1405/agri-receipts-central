@@ -77,72 +77,92 @@ export type Database = {
       receipts: {
         Row: {
           book_number: string
-          buyer_committee_id: string
-          buyer_name: string
+          checkpost_location: string | null
+          collected_by: string | null
+          collection_location: string
+          committee_id: string
           commodity: string
           created_at: string
           created_by: string
           date: string
+          designation: string
           fees_paid: number
+          generated_by: string
           id: string
+          invoice_number: string | null
+          nature_of_receipt: string
+          payee_name: string
           quantity: number
           receipt_number: string
-          seller_committee_id: string
-          seller_name: string
           status: string | null
+          trader_address: string
           trader_license: string | null
+          trader_name: string
+          unit: string
           updated_at: string
           value: number
+          vehicle_number: string | null
         }
         Insert: {
           book_number: string
-          buyer_committee_id: string
-          buyer_name: string
+          checkpost_location?: string | null
+          collected_by?: string | null
+          collection_location: string
+          committee_id: string
           commodity: string
           created_at?: string
           created_by: string
           date: string
+          designation: string
           fees_paid: number
+          generated_by: string
           id?: string
+          invoice_number?: string | null
+          nature_of_receipt: string
+          payee_name: string
           quantity: number
           receipt_number: string
-          seller_committee_id: string
-          seller_name: string
           status?: string | null
+          trader_address: string
           trader_license?: string | null
+          trader_name: string
+          unit: string
           updated_at?: string
           value: number
+          vehicle_number?: string | null
         }
         Update: {
           book_number?: string
-          buyer_committee_id?: string
-          buyer_name?: string
+          checkpost_location?: string | null
+          collected_by?: string | null
+          collection_location?: string
+          committee_id?: string
           commodity?: string
           created_at?: string
           created_by?: string
           date?: string
+          designation?: string
           fees_paid?: number
+          generated_by?: string
           id?: string
+          invoice_number?: string | null
+          nature_of_receipt?: string
+          payee_name?: string
           quantity?: number
           receipt_number?: string
-          seller_committee_id?: string
-          seller_name?: string
           status?: string | null
+          trader_address?: string
           trader_license?: string | null
+          trader_name?: string
+          unit?: string
           updated_at?: string
           value?: number
+          vehicle_number?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "receipts_buyer_committee_id_fkey"
-            columns: ["buyer_committee_id"]
-            isOneToOne: false
-            referencedRelation: "committees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "receipts_seller_committee_id_fkey"
-            columns: ["seller_committee_id"]
+            foreignKeyName: "receipts_committee_id_fkey"
+            columns: ["committee_id"]
             isOneToOne: false
             referencedRelation: "committees"
             referencedColumns: ["id"]
