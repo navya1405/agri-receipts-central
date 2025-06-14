@@ -20,8 +20,7 @@ const Analytics = ({ user }: { user: any }) => {
         .from('receipts')
         .select(`
           *,
-          seller_committee:seller_committee_id(name, district),
-          buyer_committee:buyer_committee_id(name, district)
+          committee:committee_id(name, district)
         `);
 
       if (error) throw error;
@@ -48,7 +47,7 @@ const Analytics = ({ user }: { user: any }) => {
 
   // Process data for charts
   const districtData = receiptsData.reduce((acc: any, receipt) => {
-    const district = receipt.seller_committee?.district || 'Unknown';
+    const district = receipt.committee?.district || 'Unknown';
     if (!acc[district]) {
       acc[district] = { district, count: 0, value: 0 };
     }
