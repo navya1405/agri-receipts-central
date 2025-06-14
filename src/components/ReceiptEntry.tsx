@@ -50,6 +50,7 @@ const ReceiptEntry = ({ user }) => {
   const [commoditySearch, setCommoditySearch] = useState('');
   const [committees, setCommittees] = useState([]);
   const [userCommittee, setUserCommittee] = useState(null);
+  const [userCommitteeData, setUserCommitteeData] = useState(null);
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -91,6 +92,29 @@ const ReceiptEntry = ({ user }) => {
         // Set user's committee if they have one
         if (user.committee) {
           setUserCommittee(user.committee);
+          
+          // Find the matching committee in the database
+          // Handle both short names (like "Tuni AMC") and full names
+          const matchingCommittee = committeesData?.find(c => {
+            const userCommitteeLower = user.committee.toLowerCase();
+            const dbNameLower = c.name.toLowerCase();
+            const dbCodeLower = c.code.toLowerCase();
+            
+            // Check if user committee matches the full name, code, or if it's a shortened version
+            return dbNameLower.includes(userCommitteeLower) || 
+                   dbCodeLower.includes(userCommitteeLower) ||
+                   userCommitteeLower.includes(dbNameLower.split(' ')[0]) || // Check first word
+                   (userCommitteeLower.includes('tuni') && dbNameLower.includes('tuni')) ||
+                   (userCommitteeLower.includes('kakinada') && dbNameLower.includes('kakinada'));
+          });
+          
+          if (matchingCommittee) {
+            setUserCommitteeData(matchingCommittee);
+            console.log('Found matching committee:', matchingCommittee);
+          } else {
+            console.log('No matching committee found for:', user.committee);
+            console.log('Available committees:', committeesData);
+          }
         }
       } catch (error) {
         console.error('Error loading committees:', error);
@@ -138,8 +162,12 @@ const ReceiptEntry = ({ user }) => {
         return;
     }
 
-    if (!userCommittee) {
-        toast({ title: "No committee assigned", description: "Please contact administrator to assign a committee.", variant: "destructive" });
+    if (!userCommitteeData) {
+        toast({ 
+          title: "No committee assigned", 
+          description: `Committee "${user.committee}" not found in database. Please contact administrator.`, 
+          variant: "destructive" 
+        });
         return;
     }
 
@@ -157,12 +185,6 @@ const ReceiptEntry = ({ user }) => {
     setLoading(true);
 
     try {
-      // Get the committee ID for the user's committee
-      const userCommitteeData = committees.find(c => c.name === userCommittee);
-      if (!userCommitteeData) {
-        throw new Error("User committee not found");
-      }
-
       // Create receipt object for Supabase
       const receiptData = {
         book_number: formData.book_number,
@@ -201,7 +223,7 @@ const ReceiptEntry = ({ user }) => {
 
       toast({
         title: "Receipt Saved Successfully",
-        description: `Receipt ${formData.receipt_number} has been added to ${userCommittee}.`,
+        description: `Receipt ${formData.receipt_number} has been added to ${userCommitteeData.name}.`,
       });
       
       handleReset();
@@ -248,10 +270,10 @@ const ReceiptEntry = ({ user }) => {
       <CardHeader>
         <CardTitle className="flex items-center">
           <Save className="mr-2 h-5 w-5" />
-          New Receipt Entry - {userCommittee || 'No Committee Assigned'}
+          New Receipt Entry - {userCommitteeData ? userCommitteeData.name : (userCommittee || 'No Committee Assigned')}
         </CardTitle>
         <CardDescription>
-          Enter details for a new trade receipt for {userCommittee || 'your assigned committee'}
+          Enter details for a new trade receipt for {userCommitteeData ? userCommitteeData.name : 'your assigned committee'}
         </CardDescription>
       </CardHeader>
       <CardContent>
