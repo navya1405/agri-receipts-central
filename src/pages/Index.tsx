@@ -15,26 +15,26 @@ const Index = () => {
     setLoading(true);
     console.log('Demo login attempt for username:', username);
     
-    // Updated demo user mapping - removed Officer role
+    // Updated demo user mapping with proper committee names
     const demoUsers = {
       'demo_deo': {
-        id: '1',
+        id: '550e8400-e29b-41d4-a716-446655440000',
         email: 'demo_deo@amc.gov.in',
         username: 'demo_deo',
         name: 'Demo DEO User',
         role: 'DEO',
-        committee: 'Tuni Agricultural Market Committee'
+        committee: 'Tuni AMC'
       },
       'demo_supervisor': {
-        id: '3',
+        id: '550e8400-e29b-41d4-a716-446655440001',
         email: 'demo_supervisor@amc.gov.in',
         username: 'demo_supervisor',
         name: 'Demo Supervisor User',
         role: 'Supervisor',
-        committee: 'Tuni Agricultural Market Committee'
+        committee: 'Kakinada AMC'
       },
       'demo_jd': {
-        id: '4',
+        id: '550e8400-e29b-41d4-a716-446655440002',
         email: 'demo_jd@amc.gov.in',
         username: 'demo_jd',
         name: 'Demo Joint Director',
@@ -110,8 +110,8 @@ const Index = () => {
               <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <h3 className="font-semibold text-blue-900 mb-2">Demo Login Credentials</h3>
                 <div className="text-sm text-blue-800 space-y-1">
-                  <p><strong>DEO:</strong> demo_deo</p>
-                  <p><strong>Supervisor:</strong> demo_supervisor</p>
+                  <p><strong>DEO (Tuni AMC):</strong> demo_deo</p>
+                  <p><strong>Supervisor (Kakinada AMC):</strong> demo_supervisor</p>
                   <p><strong>Joint Director:</strong> demo_jd</p>
                 </div>
                 <p className="text-xs text-blue-600 mt-2">Use these usernames to login (password not required for demo).</p>
