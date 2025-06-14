@@ -124,6 +124,18 @@ const Index = () => {
                   <div className="flex items-start gap-4"><Users className="h-6 w-6 text-purple-600 mt-1 shrink-0" /><p><strong>Role-Based Access:</strong> Secure access for DEOs, Supervisors, and Directors.</p></div>
                   <div className="flex items-start gap-4"><Shield className="h-6 w-6 text-red-600 mt-1 shrink-0" /><p><strong>Audit & Reporting:</strong> Complete tracking of all system activities for transparency.</p></div>
               </div>
+
+              {/* Demo Credentials Info */}
+              <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h3 className="font-semibold text-blue-900 mb-2">Demo Login Credentials</h3>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <p><strong>DEO:</strong> deo@demo.com / password123</p>
+                  <p><strong>Officer:</strong> officer@demo.com / password123</p>
+                  <p><strong>Supervisor:</strong> supervisor@demo.com / password123</p>
+                  <p><strong>Joint Director:</strong> jd@demo.com / password123</p>
+                </div>
+                <p className="text-xs text-blue-600 mt-2">Sign up with these emails to get the respective roles automatically assigned.</p>
+              </div>
             </div>
             <div className="flex justify-center">
               <AuthForm />
