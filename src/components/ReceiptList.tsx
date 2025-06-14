@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,8 +10,8 @@ import { FileText, Download, Search, Filter, Calendar, Edit, Eye } from "lucide-
 
 const ReceiptList = ({ user }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCommittee, setFilterCommittee] = useState('');
-  const [filterCommodity, setFilterCommodity] = useState('');
+  const [filterCommittee, setFilterCommittee] = useState('all');
+  const [filterCommodity, setFilterCommodity] = useState('all');
 
   // Mock data for receipts
   const mockReceipts = [
@@ -79,11 +78,11 @@ const ReceiptList = ({ user }) => {
       receipt.receiptNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       receipt.bookNumber.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesCommittee = filterCommittee === '' || 
+    const matchesCommittee = filterCommittee === 'all' || 
       receipt.sourceCommittee === filterCommittee || 
       receipt.destCommittee === filterCommittee;
     
-    const matchesCommodity = filterCommodity === '' || 
+    const matchesCommodity = filterCommodity === 'all' || 
       receipt.commodity === filterCommodity;
 
     return matchesSearch && matchesCommittee && matchesCommodity;
@@ -165,7 +164,7 @@ const ReceiptList = ({ user }) => {
                   <SelectValue placeholder="Filter by committee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Committees</SelectItem>
+                  <SelectItem value="all">All Committees</SelectItem>
                   {committees.map((committee) => (
                     <SelectItem key={committee} value={committee}>
                       {committee}
@@ -181,7 +180,7 @@ const ReceiptList = ({ user }) => {
                   <SelectValue placeholder="Filter by commodity" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Commodities</SelectItem>
+                  <SelectItem value="all">All Commodities</SelectItem>
                   {commodities.map((commodity) => (
                     <SelectItem key={commodity} value={commodity}>
                       {commodity}
