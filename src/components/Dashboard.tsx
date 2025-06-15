@@ -88,6 +88,7 @@ const Dashboard = ({ user, onLogout }) => {
       case 'Supervisor':
         return [
           { id: 'overview', label: 'Overview', icon: BarChart3 },
+          { id: 'entry', label: 'New Receipt', icon: Plus },
           { id: 'analytics', label: 'Committee Analytics', icon: TrendingUp },
           { id: 'trader-analytics', label: 'Trader Analysis', icon: Users },
           { id: 'list', label: 'Committee Receipts', icon: FileText }
@@ -137,7 +138,7 @@ const Dashboard = ({ user, onLogout }) => {
 
     switch (activeTab) {
       case 'entry':
-        if (user.role === 'DEO') {
+        if (user.role === 'DEO' || user.role === 'Supervisor') {
           return <ReceiptEntry user={user} />;
         }
         break;
@@ -271,6 +272,15 @@ const Dashboard = ({ user, onLogout }) => {
                     <div className="p-4 bg-purple-50 rounded-lg">
                       <h4 className="font-medium text-purple-900 mb-2">Committee Supervisor Tools</h4>
                       <div className="space-y-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setActiveTab('entry')}
+                          className="w-full justify-start"
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add New Receipt
+                        </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
