@@ -15,7 +15,7 @@ const Index = () => {
     setLoading(true);
     console.log('Demo login attempt for username:', username);
     
-    // Updated demo user mapping with proper committee names
+    // Updated demo user mapping with correct committee names from database
     const demoUsers = {
       'demo_deo': {
         id: '550e8400-e29b-41d4-a716-446655440000',
@@ -23,7 +23,7 @@ const Index = () => {
         username: 'demo_deo',
         name: 'Demo DEO User',
         role: 'DEO',
-        committee: 'Tuni AMC'
+        committee: 'Tuni Agricultural Market Committee'
       },
       'demo_supervisor': {
         id: '550e8400-e29b-41d4-a716-446655440001',
@@ -31,7 +31,7 @@ const Index = () => {
         username: 'demo_supervisor',
         name: 'Demo Supervisor User',
         role: 'Supervisor',
-        committee: 'Kakinada AMC'
+        committee: 'Kakinada Agricultural Market Committee'
       },
       'demo_jd': {
         id: '550e8400-e29b-41d4-a716-446655440002',
