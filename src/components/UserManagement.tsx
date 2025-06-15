@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Users, UserPlus, Edit, Trash2, Shield, Building2 } from 'lucide-react';
+import { Users, UserPlus, Edit, Trash2, Shield, Building2, Key, Eye, EyeOff } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserManagement = ({ user }: { user: any }) => {
   const [users, setUsers] = useState([
@@ -60,6 +60,11 @@ const UserManagement = ({ user }: { user: any }) => {
     fullCommittee: 'Tuni Agricultural Market Committee'
   });
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [passwordChangeUser, setPasswordChangeUser] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const { toast } = useToast();
 
   const committees = [
@@ -75,6 +80,60 @@ const UserManagement = ({ user }: { user: any }) => {
     { code: 'Yelamanchili AMC', name: 'Yelamanchili Agricultural Market Committee' },
     { code: 'District Level', name: 'East Godavari District Office' }
   ];
+
+  const handleChangePassword = async () => {
+    if (!passwordChangeUser || !newPassword || !confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all password fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      // In a real implementation, this would call a Supabase admin function
+      // For demo purposes, we'll simulate the password change
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Password Changed",
+        description: `Password for ${passwordChangeUser.name} has been updated successfully`,
+      });
+
+      setPasswordChangeUser(null);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to change password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   const handleAddUser = () => {
     if (!newUser.name || !newUser.email) {
@@ -242,6 +301,14 @@ const UserManagement = ({ user }: { user: any }) => {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => setPasswordChangeUser(user)}
+                    title="Change Password"
+                  >
+                    <Key className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleEditUser(user.id)}
                   >
                     <Edit className="h-4 w-4" />
@@ -259,6 +326,73 @@ const UserManagement = ({ user }: { user: any }) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Password Change Modal */}
+      {passwordChangeUser && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5" />
+              Change Password: {passwordChangeUser.name}
+            </CardTitle>
+            <CardDescription>Set a new password for this user account</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">New Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Confirm Password</label>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                >
+                  {isChangingPassword ? 'Changing...' : 'Change Password'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setPasswordChangeUser(null);
+                    setNewPassword('');
+                    setConfirmPassword('');
+                  }}
+                  disabled={isChangingPassword}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit User Modal */}
       {editingUser && (
