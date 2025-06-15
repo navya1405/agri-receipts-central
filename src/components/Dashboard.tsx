@@ -1,9 +1,19 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, LogOut, FileText, Search, BarChart3, Users, Plus, Download, TrendingUp, Menu, X, Shield } from "lucide-react";
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarHeader, 
+  SidebarMenu, 
+  SidebarMenuButton, 
+  SidebarMenuItem, 
+  SidebarProvider, 
+  SidebarTrigger,
+  SidebarInset
+} from "@/components/ui/sidebar";
 import ReceiptEntry from "./ReceiptEntry";
 import ReceiptSearch from "./ReceiptSearch";
 import ReceiptList from "./ReceiptList";
@@ -120,6 +130,61 @@ const Dashboard = ({ user, onLogout }) => {
 
   const committeeInfo = getUserCommitteeInfo();
 
+  // Statistics component for reuse
+  const StatisticsCards = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            {user.role === 'JD' ? 'Total Receipts (District)' : 'Total Receipts'}
+          </CardTitle>
+          <FileText className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.totalReceipts}</div>
+          <p className="text-xs text-muted-foreground">{committeeInfo.name}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">This Month</CardTitle>
+          <Plus className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.thisMonthCount}</div>
+          <p className="text-xs text-muted-foreground">
+            {stats.monthlyDifference >= 0 ? '+' : ''}{stats.monthlyDifference} from last month
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Active Traders</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.activeTraders}</div>
+          <p className="text-xs text-muted-foreground">This month</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Value</CardTitle>
+          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            ₹{stats.totalValue >= 100000 ? (stats.totalValue / 100000).toFixed(1) + 'L' : (stats.totalValue / 1000).toFixed(1) + 'K'}
+          </div>
+          <p className="text-xs text-muted-foreground">This month</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   const renderContent = () => {
     // Role-based access control
     const allowedTabs = getMenuItems().map(item => item.id);
@@ -139,82 +204,56 @@ const Dashboard = ({ user, onLogout }) => {
     switch (activeTab) {
       case 'entry':
         if (user.role === 'DEO' || user.role === 'Supervisor') {
-          return <ReceiptEntry user={user} />;
+          return (
+            <div className="space-y-6">
+              <StatisticsCards />
+              <ReceiptEntry user={user} />
+            </div>
+          );
         }
         break;
       case 'list':
-        return <ReceiptList user={user} />;
+        return (
+          <div className="space-y-6">
+            <StatisticsCards />
+            <ReceiptList user={user} />
+          </div>
+        );
       case 'analytics':
         if (user.role === 'Supervisor' || user.role === 'JD') {
-          return <Analytics user={user} />;
+          return (
+            <div className="space-y-6">
+              <StatisticsCards />
+              <Analytics user={user} />
+            </div>
+          );
         }
         break;
       case 'trader-analytics':
         if (user.role === 'Supervisor') {
-          return <TraderAnalytics user={user} />;
+          return (
+            <div className="space-y-6">
+              <StatisticsCards />
+              <TraderAnalytics user={user} />
+            </div>
+          );
         }
         break;
       case 'user-management':
         if (user.role === 'JD') {
-          return <UserManagement user={user} />;
+          return (
+            <div className="space-y-6">
+              <StatisticsCards />
+              <UserManagement user={user} />
+            </div>
+          );
         }
         break;
       case 'overview':
       default:
         return (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {user.role === 'JD' ? 'Total Receipts (District)' : 'Total Receipts'}
-                  </CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalReceipts}</div>
-                  <p className="text-xs text-muted-foreground">{committeeInfo.name}</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">This Month</CardTitle>
-                  <Plus className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.thisMonthCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.monthlyDifference >= 0 ? '+' : ''}{stats.monthlyDifference} from last month
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Traders</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeTraders}</div>
-                  <p className="text-xs text-muted-foreground">This month</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ₹{stats.totalValue >= 100000 ? (stats.totalValue / 100000).toFixed(1) + 'L' : (stats.totalValue / 1000).toFixed(1) + 'K'}
-                  </div>
-                  <p className="text-xs text-muted-foreground">This month</p>
-                </CardContent>
-              </Card>
-            </div>
-
+            <StatisticsCards />
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -354,6 +393,86 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
+  // JD Sidebar Component
+  const JDSidebar = () => (
+    <Sidebar>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center space-x-3">
+          <Building2 className="h-6 w-6 text-blue-600" />
+          <div>
+            <h2 className="text-lg font-bold text-gray-900">East Godavari District</h2>
+            <p className="text-xs text-gray-600">AMC Management System</p>
+          </div>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {getMenuItems().map((item) => (
+            <SidebarMenuItem key={item.id}>
+              <SidebarMenuButton 
+                onClick={() => setActiveTab(item.id)}
+                isActive={activeTab === item.id}
+                className="w-full justify-start"
+              >
+                <item.icon className="mr-3 h-4 w-4" />
+                <span>{item.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+    </Sidebar>
+  );
+
+  // If user is JD, use the collapsible sidebar layout
+  if (user.role === 'JD') {
+    return (
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full bg-gray-50">
+          <JDSidebar />
+          <SidebarInset className="flex-1">
+            {/* Header */}
+            <header className="bg-white shadow-sm border-b sticky top-0 z-10">
+              <div className="flex justify-between items-center p-4">
+                <div className="flex items-center space-x-3">
+                  <SidebarTrigger />
+                  <div>
+                    <h1 className="text-xl font-bold text-gray-900">
+                      East Godavari District AMC System
+                    </h1>
+                    <p className="text-sm text-gray-600">
+                      Agricultural Market Committee Management
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">{user.name || user.email}</p>
+                    <div className="flex items-center space-x-2">
+                      <Badge className={`text-xs ${getRoleColor(user.role)}`}>{user.role}</Badge>
+                      <span className="text-xs text-gray-500">{committeeInfo.name}</span>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={onLogout}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            </header>
+
+            {/* Main Content */}
+            <main className="p-4 sm:p-8">
+              {renderContent()}
+            </main>
+          </SidebarInset>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  // For DEO and Supervisor roles, use the existing layout
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -371,14 +490,9 @@ const Dashboard = ({ user, onLogout }) => {
               </Button>
               <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-                  {user.role === 'JD' ? 'East Godavari District AMC System' : 'Kakinada AMC System'}
-                </h1>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Kakinada AMC System</h1>
                 <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
-                  {user.role === 'JD' 
-                    ? 'East Godavari District - Agricultural Market Committee Management'
-                    : 'Agricultural Market Committee Receipt Management'
-                  }
+                  Agricultural Market Committee Receipt Management
                 </p>
               </div>
             </div>
