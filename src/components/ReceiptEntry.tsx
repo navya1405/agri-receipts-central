@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Save, RotateCcw } from "lucide-react";
+import { CalendarIcon, Save, RotateCcw, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -312,6 +311,34 @@ const ReceiptEntry = ({ user }) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Committee Information Card */}
+          <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+            <div className="flex items-center space-x-3">
+              <Building2 className="h-5 w-5 text-blue-600" />
+              <div>
+                <h3 className="font-medium text-blue-900">Committee Information</h3>
+                <p className="text-sm text-blue-700">
+                  {userCommitteeData ? (
+                    <>
+                      <span className="font-semibold">{userCommitteeData.name}</span>
+                      {userCommitteeData.district && (
+                        <span className="ml-2">• District: {userCommitteeData.district}</span>
+                      )}
+                      <span className="ml-2">• Code: {userCommitteeData.code}</span>
+                    </>
+                  ) : (
+                    <span className="text-red-600">
+                      {userCommittee ? `Committee "${userCommittee}" not found in database` : 'No committee assigned'}
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  All receipts will be recorded under this committee for statistical tracking
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Date and Receipt Info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
