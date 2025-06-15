@@ -10,10 +10,12 @@ import ReceiptList from "./ReceiptList";
 import Analytics from "./Analytics";
 import TraderAnalytics from "./TraderAnalytics";
 import UserManagement from "./UserManagement";
+import { useReceiptData } from '@/hooks/useReceiptData';
 
 const Dashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { userAccessibleReceipts } = useReceiptData(user);
 
   if (!user) {
     return (
@@ -22,6 +24,48 @@ const Dashboard = ({ user, onLogout }) => {
       </div>
     );
   }
+
+  // Calculate real-time statistics
+  const calculateStatistics = () => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    // This month's receipts
+    const thisMonthReceipts = userAccessibleReceipts.filter(receipt => {
+      const receiptDate = new Date(receipt.date);
+      return receiptDate.getMonth() === currentMonth && receiptDate.getFullYear() === currentYear;
+    });
+
+    // Last month's receipts
+    const lastMonthReceipts = userAccessibleReceipts.filter(receipt => {
+      const receiptDate = new Date(receipt.date);
+      return receiptDate.getMonth() === lastMonth && receiptDate.getFullYear() === lastMonthYear;
+    });
+
+    // Active traders this month (unique trader names)
+    const activeTraders = new Set(
+      thisMonthReceipts
+        .filter(receipt => receipt.trader_name)
+        .map(receipt => receipt.trader_name)
+    );
+
+    // Total value this month
+    const totalValue = thisMonthReceipts.reduce((sum, receipt) => sum + (Number(receipt.value) || 0), 0);
+
+    return {
+      totalReceipts: userAccessibleReceipts.length,
+      thisMonthCount: thisMonthReceipts.length,
+      lastMonthCount: lastMonthReceipts.length,
+      monthlyDifference: thisMonthReceipts.length - lastMonthReceipts.length,
+      activeTraders: activeTraders.size,
+      totalValue: totalValue
+    };
+  };
+
+  const stats = calculateStatistics();
 
   const getRoleColor = (role) => {
     switch (role) {
@@ -127,9 +171,7 @@ const Dashboard = ({ user, onLogout }) => {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {user.role === 'JD' ? '426' : user.role === 'Supervisor' ? '156' : '89'}
-                  </div>
+                  <div className="text-2xl font-bold">{stats.totalReceipts}</div>
                   <p className="text-xs text-muted-foreground">{committeeInfo.name}</p>
                 </CardContent>
               </Card>
@@ -140,11 +182,9 @@ const Dashboard = ({ user, onLogout }) => {
                   <Plus className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {user.role === 'JD' ? '85' : user.role === 'Supervisor' ? '34' : '12'}
-                  </div>
+                  <div className="text-2xl font-bold">{stats.thisMonthCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    +{user.role === 'JD' ? '18' : user.role === 'Supervisor' ? '12' : '8'} from last month
+                    {stats.monthlyDifference >= 0 ? '+' : ''}{stats.monthlyDifference} from last month
                   </p>
                 </CardContent>
               </Card>
@@ -155,9 +195,7 @@ const Dashboard = ({ user, onLogout }) => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {user.role === 'JD' ? '145' : user.role === 'Supervisor' ? '67' : '24'}
-                  </div>
+                  <div className="text-2xl font-bold">{stats.activeTraders}</div>
                   <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
               </Card>
@@ -169,7 +207,7 @@ const Dashboard = ({ user, onLogout }) => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {user.role === 'JD' ? '₹18.7L' : user.role === 'Supervisor' ? '₹7.3L' : '₹2.4L'}
+                    ₹{stats.totalValue >= 100000 ? (stats.totalValue / 100000).toFixed(1) + 'L' : (stats.totalValue / 1000).toFixed(1) + 'K'}
                   </div>
                   <p className="text-xs text-muted-foreground">This month</p>
                 </CardContent>
