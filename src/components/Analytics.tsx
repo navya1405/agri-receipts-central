@@ -2,42 +2,18 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
+import { useReceiptData } from '@/hooks/useReceiptData';
 
 const Analytics = ({ user }: { user: any }) => {
-  const [receiptsData, setReceiptsData] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { userAccessibleReceipts, receiptsLoading, userCommitteeId } = useReceiptData(user);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, []);
+  console.log(`Analytics - User: ${user.username}, Role: ${user.role}, Committee: ${user.committee}`);
+  console.log(`Analytics - User Committee ID: ${userCommitteeId}`);
+  console.log(`Analytics - Accessible receipts count: ${userAccessibleReceipts.length}`);
 
-  const fetchAnalyticsData = async () => {
-    try {
-      const { data: receipts, error } = await supabase
-        .from('receipts')
-        .select(`
-          *,
-          committee:committee_id(name, district)
-        `);
-
-      if (error) throw error;
-      setReceiptsData(receipts || []);
-    } catch (error: any) {
-      console.error('Analytics fetch error:', error);
-      toast({
-        title: "Error fetching analytics data",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (receiptsLoading) {
     return (
       <div className="space-y-6">
         <div className="text-center py-8">Loading analytics data...</div>
@@ -45,9 +21,14 @@ const Analytics = ({ user }: { user: any }) => {
     );
   }
 
-  // Process data for charts
+  // Use userAccessibleReceipts which is already filtered by user's committee access
+  const receiptsData = userAccessibleReceipts;
+
+  console.log(`Analytics - Processing ${receiptsData.length} receipts for analysis`);
+
+  // Process data for charts using the filtered receipts
   const districtData = receiptsData.reduce((acc: any, receipt) => {
-    const district = receipt.committee?.district || 'Unknown';
+    const district = receipt.committeeName || 'Unknown';
     if (!acc[district]) {
       acc[district] = { district, count: 0, value: 0 };
     }
@@ -96,7 +77,7 @@ const Analytics = ({ user }: { user: any }) => {
       case 'JD':
         return 'District Analytics Dashboard';
       case 'Supervisor':
-        return 'Committee Analytics Dashboard';
+        return `${user.committee} Analytics Dashboard`;
       default:
         return 'Analytics Dashboard';
     }
@@ -107,11 +88,35 @@ const Analytics = ({ user }: { user: any }) => {
       case 'JD':
         return 'Comprehensive overview of AMC receipts across East Godavari District';
       case 'Supervisor':
-        return 'Committee-level analysis of receipts and trading activity';
+        return `Committee-level analysis of receipts and trading activity for ${user.committee}`;
       default:
         return 'Analysis of receipts and trading activity';
     }
   };
+
+  // Show a message if no data is available
+  if (totalReceipts === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{getAnalyticsTitle()}</h2>
+          <p className="text-gray-600">{getAnalyticsDescription()}</p>
+        </div>
+        
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="text-gray-500">
+              <h3 className="text-lg font-medium mb-2">No Data Available</h3>
+              <p>No receipts found for {user.role === 'JD' ? 'the district' : 'your committee'}. Once receipts are added, analytics will be displayed here.</p>
+              {user.role === 'Supervisor' && (
+                <p className="mt-2 text-sm">Committee: {user.committee}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -119,6 +124,19 @@ const Analytics = ({ user }: { user: any }) => {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">{getAnalyticsTitle()}</h2>
         <p className="text-gray-600">{getAnalyticsDescription()}</p>
       </div>
+
+      {/* Debug Info for Supervisor */}
+      {user.role === 'Supervisor' && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4">
+            <div className="text-sm text-blue-800">
+              <p><strong>Committee:</strong> {user.committee}</p>
+              <p><strong>Committee ID:</strong> {userCommitteeId ? userCommitteeId.slice(0, 8) + '...' : 'Not Found'}</p>
+              <p><strong>Receipts Found:</strong> {totalReceipts}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -171,10 +189,10 @@ const Analytics = ({ user }: { user: any }) => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {user.role === 'JD' ? 'Committee-wise Receipt Distribution' : 'District-wise Receipt Distribution'}
+              {user.role === 'JD' ? 'Committee-wise Receipt Distribution' : 'Committee Receipt Distribution'}
             </CardTitle>
             <CardDescription>
-              {user.role === 'JD' ? 'Number of receipts by committee' : 'Number of receipts by district'}
+              {user.role === 'JD' ? 'Number of receipts by committee' : `Receipt distribution for ${user.committee}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -247,10 +265,10 @@ const Analytics = ({ user }: { user: any }) => {
         <Card>
           <CardHeader>
             <CardTitle>
-              {user.role === 'JD' ? 'Committee Performance' : 'District Performance'}
+              {user.role === 'JD' ? 'Committee Performance' : 'Committee Performance'}
             </CardTitle>
             <CardDescription>
-              {user.role === 'JD' ? 'Detailed committee-wise breakdown' : 'Detailed district-wise breakdown'}
+              {user.role === 'JD' ? 'Detailed committee-wise breakdown' : `Performance summary for ${user.committee}`}
             </CardDescription>
           </CardHeader>
           <CardContent>
