@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Users, UserPlus, Edit, Trash2, Shield, Building2, Key, Eye, EyeOff } from 'lucide-react';
+import { Users, UserPlus, Edit, Trash2, Shield, Building2, Key, Eye, EyeOff, History } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const UserManagement = ({ user }: { user: any }) => {
@@ -16,7 +16,8 @@ const UserManagement = ({ user }: { user: any }) => {
       email: 'demo_deo@kakinada.gov.in', 
       role: 'DEO', 
       committee: 'Tuni AMC',
-      fullCommittee: 'Tuni Agricultural Market Committee'
+      fullCommittee: 'Tuni Agricultural Market Committee',
+      currentPassword: 'deo123456'
     },
     { 
       id: '2', 
@@ -24,7 +25,8 @@ const UserManagement = ({ user }: { user: any }) => {
       email: 'demo_supervisor@kakinada.gov.in', 
       role: 'Supervisor', 
       committee: 'Kakinada AMC',
-      fullCommittee: 'Kakinada Agricultural Market Committee'
+      fullCommittee: 'Kakinada Agricultural Market Committee',
+      currentPassword: 'super123456'
     },
     { 
       id: '3', 
@@ -32,7 +34,8 @@ const UserManagement = ({ user }: { user: any }) => {
       email: 'demo_jd@kakinada.gov.in', 
       role: 'JD', 
       committee: 'District Level',
-      fullCommittee: 'East Godavari District Office'
+      fullCommittee: 'East Godavari District Office',
+      currentPassword: 'jd123456'
     },
     { 
       id: '4', 
@@ -40,7 +43,8 @@ const UserManagement = ({ user }: { user: any }) => {
       email: 'deo_rajahmundry@kakinada.gov.in', 
       role: 'DEO', 
       committee: 'Rajahmundry AMC',
-      fullCommittee: 'Rajahmundry Agricultural Market Committee'
+      fullCommittee: 'Rajahmundry Agricultural Market Committee',
+      currentPassword: 'raja123456'
     },
     { 
       id: '5', 
@@ -48,7 +52,8 @@ const UserManagement = ({ user }: { user: any }) => {
       email: 'supervisor_amalapuram@kakinada.gov.in', 
       role: 'Supervisor', 
       committee: 'Amalapuram AMC',
-      fullCommittee: 'Amalapuram Agricultural Market Committee'
+      fullCommittee: 'Amalapuram Agricultural Market Committee',
+      currentPassword: 'amal123456'
     }
   ]);
 
@@ -64,6 +69,7 @@ const UserManagement = ({ user }: { user: any }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const { toast } = useToast();
 
@@ -113,8 +119,15 @@ const UserManagement = ({ user }: { user: any }) => {
 
     try {
       // In a real implementation, this would call a Supabase admin function
-      // For demo purposes, we'll simulate the password change
+      // For demo purposes, we'll simulate the password change and update the user's password
       await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update the user's password in the local state
+      setUsers(users.map(u => 
+        u.id === passwordChangeUser.id 
+          ? { ...u, currentPassword: newPassword }
+          : u
+      ));
       
       toast({
         title: "Password Changed",
@@ -124,6 +137,7 @@ const UserManagement = ({ user }: { user: any }) => {
       setPasswordChangeUser(null);
       setNewPassword('');
       setConfirmPassword('');
+      setShowCurrentPassword(false);
     } catch (error) {
       toast({
         title: "Error",
@@ -149,7 +163,8 @@ const UserManagement = ({ user }: { user: any }) => {
     const user = {
       id: Date.now().toString(),
       ...newUser,
-      fullCommittee: selectedCommittee?.name || newUser.committee
+      fullCommittee: selectedCommittee?.name || newUser.committee,
+      currentPassword: 'default123456'
     };
 
     setUsers([...users, user]);
@@ -213,6 +228,8 @@ const UserManagement = ({ user }: { user: any }) => {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const isJointDirector = user?.role === 'JD';
 
   return (
     <div className="space-y-6">
@@ -339,6 +356,34 @@ const UserManagement = ({ user }: { user: any }) => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Show current password for JD users */}
+              {isJointDirector && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Current Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showCurrentPassword ? "text" : "password"}
+                      value={passwordChangeUser.currentPassword}
+                      readOnly
+                      className="bg-gray-50"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    >
+                      {showCurrentPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                    <History className="h-3 w-3" />
+                    Current password for {passwordChangeUser.name}
+                  </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">New Password</label>
@@ -383,6 +428,7 @@ const UserManagement = ({ user }: { user: any }) => {
                     setPasswordChangeUser(null);
                     setNewPassword('');
                     setConfirmPassword('');
+                    setShowCurrentPassword(false);
                   }}
                   disabled={isChangingPassword}
                 >
