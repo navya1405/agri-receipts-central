@@ -9,22 +9,36 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, TrendingUp, User, DollarSign, Package, Calendar } from 'lucide-react';
 import { useReceiptData } from '@/hooks/useReceiptData';
 
-// Define types for trader data
+// Updated Receipt interface to match actual data structure
 interface Receipt {
   id: string;
   date: string;
-  seller_name: string;
+  trader_name: string;
   commodity: string;
   quantity: number;
   value: number;
-  seller_committee?: {
-    name: string;
-    district: string;
-  };
-  buyer_committee?: {
-    name: string;
-    district: string;
-  };
+  committee_id: string;
+  committeeName?: string;
+  // Add other fields as needed
+  book_number?: string;
+  receipt_number?: string;
+  payee_name?: string;
+  trader_address?: string;
+  unit?: string;
+  fees_paid?: number;
+  nature_of_receipt?: string;
+  vehicle_number?: string;
+  invoice_number?: string;
+  payee_address?: string;
+  collection_location?: string;
+  designation?: string;
+  generated_by?: string;
+  created_by?: string;
+  created_at?: string;
+  updated_at?: string;
+  status?: string;
+  collected_by?: string;
+  checkpost_location?: string;
 }
 
 interface TraderData {
@@ -54,7 +68,7 @@ const TraderAnalytics = ({ user }: { user: any }) => {
     );
   }
 
-  // Use real receipts data instead of demo data
+  // Use real receipts data
   const receiptsData = userAccessibleReceipts;
 
   // Process trader data with proper typing
@@ -176,66 +190,6 @@ const TraderAnalytics = ({ user }: { user: any }) => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Top Traders Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Traders</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{Object.keys(traderData).length}</div>
-            <p className="text-xs text-muted-foreground">Active traders</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Top Trader Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{(topTraders[0]?.totalValue / 100000 || 0).toFixed(1)}L</div>
-            <p className="text-xs text-muted-foreground">{topTraders[0]?.name || 'N/A'}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Receipts/Trader</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Object.keys(traderData).length > 0 
-                ? Math.round(receiptsData.length / Object.keys(traderData).length)
-                : 0
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">Per trader</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active This Month</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Object.values(traderData).filter((trader: TraderData) => {
-                if (!trader.lastTransaction) return false;
-                const lastTransaction = new Date(trader.lastTransaction);
-                const currentMonth = new Date();
-                return lastTransaction.getMonth() === currentMonth.getMonth() && 
-                       lastTransaction.getFullYear() === currentMonth.getFullYear();
-              }).length}
-            </div>
-            <p className="text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Traders by Value */}
