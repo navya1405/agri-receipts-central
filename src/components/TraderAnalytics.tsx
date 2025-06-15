@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
 import { Search, TrendingUp, User, DollarSign, Package, Calendar } from 'lucide-react';
+import { useReceiptData } from '@/hooks/useReceiptData';
 
 // Define types for trader data
 interface Receipt {
@@ -36,180 +37,16 @@ interface TraderData {
   lastTransaction: string | null;
 }
 
-// Demo data for trader analytics
-const demoReceipts: Receipt[] = [
-  {
-    id: '1',
-    date: '2024-06-10',
-    seller_name: 'Rajesh Kumar',
-    commodity: 'Rice',
-    quantity: 500,
-    value: 250000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '2',
-    date: '2024-06-08',
-    seller_name: 'Suresh Reddy',
-    commodity: 'Cotton',
-    quantity: 300,
-    value: 180000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '3',
-    date: '2024-06-07',
-    seller_name: 'Rajesh Kumar',
-    commodity: 'Wheat',
-    quantity: 200,
-    value: 120000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '4',
-    date: '2024-06-05',
-    seller_name: 'Priya Sharma',
-    commodity: 'Jowar',
-    quantity: 400,
-    value: 160000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '5',
-    date: '2024-06-03',
-    seller_name: 'Mohan Rao',
-    commodity: 'Maize',
-    quantity: 600,
-    value: 300000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '6',
-    date: '2024-06-01',
-    seller_name: 'Suresh Reddy',
-    commodity: 'Rice',
-    quantity: 350,
-    value: 175000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '7',
-    date: '2024-05-28',
-    seller_name: 'Lakshmi Devi',
-    commodity: 'Gram',
-    quantity: 250,
-    value: 200000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '8',
-    date: '2024-05-25',
-    seller_name: 'Rajesh Kumar',
-    commodity: 'Cotton',
-    quantity: 450,
-    value: 270000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '9',
-    date: '2024-05-22',
-    seller_name: 'Priya Sharma',
-    commodity: 'Wheat',
-    quantity: 300,
-    value: 180000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '10',
-    date: '2024-05-20',
-    seller_name: 'Mohan Rao',
-    commodity: 'Rice',
-    quantity: 550,
-    value: 275000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '11',
-    date: '2024-05-18',
-    seller_name: 'Kiran Kumar',
-    commodity: 'Sugarcane',
-    quantity: 800,
-    value: 400000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '12',
-    date: '2024-05-15',
-    seller_name: 'Lakshmi Devi',
-    commodity: 'Onion',
-    quantity: 200,
-    value: 80000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '13',
-    date: '2024-05-12',
-    seller_name: 'Venkat Rao',
-    commodity: 'Tomato',
-    quantity: 150,
-    value: 90000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Amalapuram Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '14',
-    date: '2024-05-10',
-    seller_name: 'Kiran Kumar',
-    commodity: 'Potato',
-    quantity: 400,
-    value: 120000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Kakinada Agricultural Market Committee', district: 'East Godavari' }
-  },
-  {
-    id: '15',
-    date: '2024-05-08',
-    seller_name: 'Venkat Rao',
-    commodity: 'Rice',
-    quantity: 320,
-    value: 160000,
-    seller_committee: { name: 'Tuni Agricultural Market Committee', district: 'East Godavari' },
-    buyer_committee: { name: 'Rajahmundry Agricultural Market Committee', district: 'East Godavari' }
-  }
-];
-
 const TraderAnalytics = ({ user }: { user: any }) => {
-  const [receiptsData, setReceiptsData] = useState<Receipt[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { userAccessibleReceipts, receiptsLoading } = useReceiptData(user);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTrader, setSelectedTrader] = useState<string | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Simulate loading demo data
-    setTimeout(() => {
-      setReceiptsData(demoReceipts);
-      setLoading(false);
-      toast({
-        title: "Demo Data Loaded",
-        description: "Trader analytics loaded with sample data for demonstration.",
-      });
-    }, 1000);
-  }, [toast]);
+  console.log(`TraderAnalytics - User: ${user.username}, Role: ${user.role}, Committee: ${user.committee}`);
+  console.log(`TraderAnalytics - Accessible receipts count: ${userAccessibleReceipts.length}`);
 
-  if (loading) {
+  if (receiptsLoading) {
     return (
       <div className="space-y-6">
         <div className="text-center py-8">Loading trader analytics...</div>
@@ -217,9 +54,12 @@ const TraderAnalytics = ({ user }: { user: any }) => {
     );
   }
 
+  // Use real receipts data instead of demo data
+  const receiptsData = userAccessibleReceipts;
+
   // Process trader data with proper typing
   const traderData: Record<string, TraderData> = receiptsData.reduce((acc, receipt) => {
-    const traderName = receipt.seller_name || 'Unknown Trader';
+    const traderName = receipt.trader_name || 'Unknown Trader';
     if (!acc[traderName]) {
       acc[traderName] = {
         name: traderName,
@@ -282,6 +122,30 @@ const TraderAnalytics = ({ user }: { user: any }) => {
   };
 
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0', '#ffb347'];
+
+  // Show empty state if no traders found
+  if (Object.keys(traderData).length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Trader Performance Analytics</h2>
+          <p className="text-gray-600">Comprehensive analysis of trader performance and trading patterns</p>
+        </div>
+
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="text-gray-500">
+              <h3 className="text-lg font-medium mb-2">No Trader Data Available</h3>
+              <p>No receipts with trader information found for {user.role === 'JD' ? 'the district' : 'your committee'}. Once receipts with trader data are added, analytics will be displayed here.</p>
+              {user.role === 'Supervisor' && (
+                <p className="mt-2 text-sm">Committee: {user.committee}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
