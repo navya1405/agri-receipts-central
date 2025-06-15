@@ -11,7 +11,31 @@ export const useReceiptData = (user: any) => {
     return new Map(committees.map(c => [c.id, c.name]));
   }, [committees]);
 
-  // Filter committees based on user role
+  // Get user's actual committee ID from the committees table
+  const userCommitteeId = useMemo(() => {
+    if (!committees || !user.committee) return null;
+    
+    // Find the committee that matches the user's assigned committee name
+    const userCommittee = committees.find(committee => {
+      const committeeName = committee.name.toLowerCase();
+      const userCommitteeName = user.committee.toLowerCase();
+      
+      // Exact matching for known committees
+      if (userCommitteeName === 'kakinada amc' && committeeName.includes('kakinada')) {
+        return true;
+      }
+      if (userCommitteeName === 'tuni amc' && committeeName.includes('tuni')) {
+        return true;
+      }
+      
+      // Generic exact matching
+      return committeeName === userCommitteeName;
+    });
+    
+    return userCommittee?.id || null;
+  }, [committees, user.committee]);
+
+  // Filter committees based on user role and exact committee ID
   const filteredCommittees = useMemo(() => {
     if (!committees) return [];
     
@@ -22,26 +46,16 @@ export const useReceiptData = (user: any) => {
     
     // Supervisor and DEO should only see their assigned committee
     if (user.role === 'Supervisor' || user.role === 'DEO') {
-      const userCommittee = user.committee?.toLowerCase() || '';
+      if (!userCommitteeId) {
+        console.warn(`User ${user.username} has committee "${user.committee}" but no matching committee found in database`);
+        return [];
+      }
       
-      return committees.filter(committee => {
-        const committeeName = committee.name.toLowerCase();
-        
-        // Try to match the user's committee with the database committee
-        if (userCommittee === 'kakinada amc' && committeeName.includes('kakinada')) {
-          return true;
-        }
-        if (userCommittee === 'tuni amc' && committeeName.includes('tuni')) {
-          return true;
-        }
-        
-        // Generic matching for other cases
-        return committeeName.includes(userCommittee) || userCommittee.includes(committeeName);
-      });
+      return committees.filter(committee => committee.id === userCommitteeId);
     }
     
     return [];
-  }, [committees, user.role, user.committee]);
+  }, [committees, user.role, userCommitteeId]);
   
   const allReceipts = useMemo(() => {
     if (!receipts) return [];
@@ -51,7 +65,7 @@ export const useReceiptData = (user: any) => {
     }));
   }, [receipts, committeeMap]);
 
-  // Filter receipts based on user role and committee access
+  // Filter receipts based on user role and exact committee access
   const userAccessibleReceipts = useMemo(() => {
     if (!allReceipts.length) return [];
     
@@ -62,19 +76,28 @@ export const useReceiptData = (user: any) => {
     
     // Supervisor and DEO should only see receipts from their committee
     if (user.role === 'Supervisor' || user.role === 'DEO') {
-      const allowedCommitteeNames = filteredCommittees.map(c => c.name);
-      return allReceipts.filter(receipt => 
-        allowedCommitteeNames.includes(receipt.committeeName)
+      if (!userCommitteeId) {
+        console.warn(`User ${user.username} has no valid committee ID, returning empty receipts`);
+        return [];
+      }
+      
+      const filteredReceipts = allReceipts.filter(receipt => 
+        receipt.committee_id === userCommitteeId
       );
+      
+      console.log(`User ${user.username} (${user.committee}) can access ${filteredReceipts.length} receipts from committee ID: ${userCommitteeId}`);
+      
+      return filteredReceipts;
     }
     
     return [];
-  }, [allReceipts, user.role, filteredCommittees]);
+  }, [allReceipts, user.role, user.username, user.committee, userCommitteeId]);
 
   return {
     receiptsLoading,
     committeesLoading,
     filteredCommittees,
-    userAccessibleReceipts
+    userAccessibleReceipts,
+    userCommitteeId // Export this for debugging
   };
 };

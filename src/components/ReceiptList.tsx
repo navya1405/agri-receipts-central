@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Building2 } from "lucide-react";
 import { useReceiptData } from '@/hooks/useReceiptData';
 import { useReceiptFilters } from '@/hooks/useReceiptFilters';
 import { handleExport, getReceiptListTitle, getReceiptListDescription } from '@/utils/receiptUtils';
@@ -10,7 +10,7 @@ import { ReceiptMobileView } from './ReceiptMobileView';
 import { ReceiptDesktopTable } from './ReceiptDesktopTable';
 
 const ReceiptList = ({ user }) => {
-  const { receiptsLoading, committeesLoading, filteredCommittees, userAccessibleReceipts } = useReceiptData(user);
+  const { receiptsLoading, committeesLoading, filteredCommittees, userAccessibleReceipts, userCommitteeId } = useReceiptData(user);
   
   const {
     searchTerm,
@@ -48,6 +48,22 @@ const ReceiptList = ({ user }) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Committee Access Debug Info - only show for Supervisor and DEO */}
+          {(user.role === 'Supervisor' || user.role === 'DEO') && (
+            <div className="mb-4 p-3 border rounded-lg bg-blue-50 border-blue-200">
+              <div className="flex items-center space-x-2 text-sm">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                <span className="font-medium text-blue-900">Committee Access:</span>
+                <span className="text-blue-700">
+                  {user.committee} {userCommitteeId ? `(ID: ${userCommitteeId.slice(0, 8)}...)` : '(Not Found)'}
+                </span>
+              </div>
+              <div className="text-xs text-blue-600 mt-1">
+                You can only see receipts from your assigned committee. Found {userAccessibleReceipts.length} accessible receipts.
+              </div>
+            </div>
+          )}
+
           <ReceiptFilters
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
