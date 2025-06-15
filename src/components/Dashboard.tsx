@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,8 @@ import {
   SidebarMenuItem, 
   SidebarProvider, 
   SidebarTrigger,
-  SidebarInset
+  SidebarInset,
+  useSidebar
 } from "@/components/ui/sidebar";
 import ReceiptEntry from "./ReceiptEntry";
 import ReceiptSearch from "./ReceiptSearch";
@@ -21,6 +22,8 @@ import Analytics from "./Analytics";
 import TraderAnalytics from "./TraderAnalytics";
 import UserManagement from "./UserManagement";
 import { useReceiptData } from '@/hooks/useReceiptData';
+
+const INACTIVITY_TIMEOUT = 30000; // 30 seconds
 
 const Dashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -393,43 +396,85 @@ const Dashboard = ({ user, onLogout }) => {
     }
   };
 
-  // JD Sidebar Component
-  const JDSidebar = () => (
-    <Sidebar>
-      <SidebarHeader className="p-4">
-        <div className="flex items-center space-x-3">
-          <Building2 className="h-6 w-6 text-blue-600" />
-          <div>
-            <h2 className="text-lg font-bold text-gray-900">East Godavari District</h2>
-            <p className="text-xs text-gray-600">AMC Management System</p>
-          </div>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {getMenuItems().map((item) => (
-            <SidebarMenuItem key={item.id}>
-              <SidebarMenuButton 
-                onClick={() => setActiveTab(item.id)}
-                isActive={activeTab === item.id}
-                className="w-full justify-start"
-              >
-                <item.icon className="mr-3 h-4 w-4" />
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarContent>
-    </Sidebar>
-  );
+  // Auto-collapsing JD Sidebar Component
+  const AutoCollapsibleJDSidebar = () => {
+    const { setOpen } = useSidebar();
+    const [inactivityTimer, setInactivityTimer] = useState(null);
 
-  // If user is JD, use the collapsible sidebar layout
+    const resetInactivityTimer = useCallback(() => {
+      if (inactivityTimer) {
+        clearTimeout(inactivityTimer);
+      }
+      
+      const timer = setTimeout(() => {
+        setOpen(false);
+      }, INACTIVITY_TIMEOUT);
+      
+      setInactivityTimer(timer);
+    }, [inactivityTimer, setOpen]);
+
+    useEffect(() => {
+      // Start the inactivity timer when component mounts
+      resetInactivityTimer();
+
+      // Add event listeners for user activity
+      const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+      
+      events.forEach(event => {
+        document.addEventListener(event, resetInactivityTimer, true);
+      });
+
+      // Cleanup on unmount
+      return () => {
+        if (inactivityTimer) {
+          clearTimeout(inactivityTimer);
+        }
+        events.forEach(event => {
+          document.removeEventListener(event, resetInactivityTimer, true);
+        });
+      };
+    }, [resetInactivityTimer, inactivityTimer]);
+
+    return (
+      <Sidebar>
+        <SidebarHeader className="p-4">
+          <div className="flex items-center space-x-3">
+            <Building2 className="h-6 w-6 text-blue-600" />
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">East Godavari District</h2>
+              <p className="text-xs text-gray-600">AMC Management System</p>
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarMenu>
+            {getMenuItems().map((item) => (
+              <SidebarMenuItem key={item.id}>
+                <SidebarMenuButton 
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    resetInactivityTimer();
+                  }}
+                  isActive={activeTab === item.id}
+                  className="w-full justify-start"
+                >
+                  <item.icon className="mr-3 h-4 w-4" />
+                  <span>{item.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+      </Sidebar>
+    );
+  };
+
+  // If user is JD, use the collapsible sidebar layout with auto-collapse
   if (user.role === 'JD') {
     return (
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-gray-50">
-          <JDSidebar />
+          <AutoCollapsibleJDSidebar />
           <SidebarInset className="flex-1">
             {/* Header */}
             <header className="bg-white shadow-sm border-b sticky top-0 z-10">
